@@ -1,0 +1,45 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Virtual environments
+venv/
+ENV/
+env/
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# macOS
+.DS_Store
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# Logs and databases
+*.log
+*.sqlite3
+
+# Byte-compiled / optimized / DLL files
+*.pyd
+*.so
+*.dll
+
+# C extensions
+*.c
+*.cpp
+
+# Temporary files
+*.tmp
+*.swp
+*.swo
+
+# Assets / data
+*.pyc
