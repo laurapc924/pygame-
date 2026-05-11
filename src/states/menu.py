@@ -1,6 +1,7 @@
 import pygame
 from src.settings import GREEN_FOREST, WHITE, HEIGHT
 from src.states.base_state import BaseState
+from src.states.game_state import GameState
 
 
 class MenuState(BaseState):
@@ -17,7 +18,7 @@ class MenuState(BaseState):
 			
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
-                    print("Jogo começando...")
+                    self.game.change_state(GameState(self.game))
                 if event.key == pygame.K_ESCAPE:
                     self.game.running = False
 
