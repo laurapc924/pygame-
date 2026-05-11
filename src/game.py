@@ -6,6 +6,8 @@ Gerencia a janela, o loop de jogo e a máquina de estados.
 import pygame
 
 from src.settings import FPS, HEIGHT, TITLE, WIDTH
+from src.states.menu import MenuState
+
 
 
 class Game:
@@ -18,7 +20,7 @@ class Game:
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
-        self.current_state = None
+        self.current_state = MenuState(self)
 
     def change_state(self, new_state):
         """Muda para um novo estado do jogo.

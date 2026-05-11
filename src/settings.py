@@ -13,7 +13,7 @@ TITLE = "Fox Crossing"
 
 WHITE = (255, 255, 255)
 BLACK = (0, 0, 0)
-GREEN_FOREST = (0, 100, 0)
+GREEN_FOREST = (34, 85, 34)
 GRAY_ROAD = (100, 100, 100)
 
 BASE_DIR = Path(__file__).resolve().parent.parent
