@@ -3,7 +3,8 @@
 import pygame
 
 from src.entities.fox import Fox
-from src.settings import GRAY_ROAD, HEIGHT, WIDTH
+from src.managers.map_manager import MapManager
+from src.settings import HEIGHT
 from src.states.base_state import BaseState
 
 
@@ -12,7 +13,8 @@ class GameState(BaseState):
 
     def __init__(self, game):
         super().__init__(game)
-        fox_x = WIDTH // 2 - 20
+        self.map_manager = MapManager()
+        fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
 
@@ -26,5 +28,5 @@ class GameState(BaseState):
         pass
 
     def draw(self, screen):
-        screen.fill(GRAY_ROAD)
+        self.map_manager.draw(screen)
         self.fox.draw(screen)
