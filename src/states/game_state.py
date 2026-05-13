@@ -19,13 +19,18 @@ class GameState(BaseState):
         self.fox = Fox(fox_x, fox_y)
 
     def handle_events(self):
-        if pygame.event.get(pygame.QUIT) or pygame.key.get_pressed()[pygame.K_ESCAPE]:
-            self.game.running = False
-            return
-        self.fox.handle_events()
+        events = pygame.event.get()
+        for event in events:
+            if event.type == pygame.QUIT:
+                self.game.running = False
+                return
+            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+                self.game.running = False
+                return
+        self.fox.handle_events(events)
 
     def update(self, dt):
-        pass
+        self.fox.update(dt)
 
     def draw(self, screen):
         self.map_manager.draw(screen)
