@@ -18,6 +18,11 @@ class Fox:
         self.y = float(y)
         self.width = 40
         self.height = 40
+        self.rect = pygame.Rect(int(self.x), int(self.y), self.width, self.height)
+        self.start_x = self.rect.x
+        self.start_y = self.rect.y
+        self.lives = 3
+        self.invincible_timer = 0.0
 
     def handle_events(self, events):
         """Recebe a lista de eventos do frame atual (sem consumir do pygame).
@@ -45,6 +50,17 @@ class Fox:
 
         self.x = max(0.0, min(self.x, WIDTH - self.width))
         self.y = max(0.0, min(self.y, HEIGHT - self.height))
+        self.rect.x = int(self.x)
+        self.rect.y = int(self.y)
+        if self.invincible_timer > 0:
+            self.invincible_timer -= dt
+
+    def reset_position(self):
+        """Volta a raposa para a posição inicial após colisão."""
+        self.rect.x = self.start_x
+        self.rect.y = self.start_y
+        self.x = float(self.start_x)
+        self.y = float(self.start_y)
 
     def draw(self, screen):
         """Desenha a raposa (placeholder: retângulo laranja)."""

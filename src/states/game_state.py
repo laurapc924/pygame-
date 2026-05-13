@@ -18,6 +18,7 @@ class GameState(BaseState):
         fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
+        self.font_hud = pygame.font.SysFont(None, 36)
 
     def handle_events(self):
         events = pygame.event.get()
@@ -31,10 +32,21 @@ class GameState(BaseState):
         self.fox.handle_events(events)
 
     def update(self, dt):
+        """Atualiza a raposa, obstáculos e verifica colisões."""
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
+        hits = pygame.sprite.spritecollide(self.fox, self.map_manager.obstacles, False)
+        if hits and self.fox.invincible_timer <= 0:
+            self.fox.lives -= 1
+            self.fox.reset_position()
+            self.fox.invincible_timer = 1.5
+            if self.fox.lives <= 0:
+                print("GAME OVER")
 
     def draw(self, screen):
+        """Desenha mapa, obstáculos, raposa e HUD de vidas."""
         self.map_manager.draw(screen)
-        self.map_manager.draw_obstacles(screen)  
+        self.map_manager.draw_obstacles(screen)
         self.fox.draw(screen)
+        hud_text = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
+        screen.blit(hud_text, (10, 10))
