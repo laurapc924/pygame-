@@ -1,5 +1,5 @@
 import pygame
-from src.settings import WIDTH
+from src.settings import HEIGHT
 
 
 class Obstacle(pygame.sprite.Sprite):
@@ -26,12 +26,13 @@ class Obstacle(pygame.sprite.Sprite):
     def update(self, dt):
       
         # Movimento: posição += velocidade * direção * tempo
-        self.rect.x += self.speed * self.direction * dt
+        self.rect.y += self.speed * self.direction * dt
 
         # Loop infinito: se sair de um lado, aparece no outro
-        if self.direction == 1 and self.rect.left > WIDTH:
-            # Estava indo pra direita e saiu pela direita → reaparece à esquerda
-            self.rect.right = 0
-        elif self.direction == -1 and self.rect.right < 0:
-            # Estava indo pra esquerda e saiu pela esquerda → reaparece à direita
-            self.rect.left = WIDTH
+        if self.direction == 1 and self.rect.top > HEIGHT:
+            # Estava indo pra baixo e saiu pela parte de baixo → reaparece na parte de cima
+            self.rect.bottom = 0
+        elif self.direction == -1 and self.rect.bottom < 0:
+            # Estava indo pra cima e saiu pela parte de cima → reaparece na parte de baixo
+            self.rect.top = HEIGHT
+            
