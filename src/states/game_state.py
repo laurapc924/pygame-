@@ -14,6 +14,7 @@ class GameState(BaseState):
     def __init__(self, game):
         super().__init__(game)
         self.map_manager = MapManager()
+        self.map_manager.spawn_obstacles()
         fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
@@ -31,7 +32,9 @@ class GameState(BaseState):
 
     def update(self, dt):
         self.fox.update(dt)
+        self.map_manager.update_obstacles(dt)
 
     def draw(self, screen):
         self.map_manager.draw(screen)
+        self.map_manager.draw_obstacles(screen)  
         self.fox.draw(screen)

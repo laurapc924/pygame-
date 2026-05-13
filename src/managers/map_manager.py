@@ -72,7 +72,7 @@ class MapManager:
                 velocidade = random.randint(150, 300)
 
                 # X: centralizar o carro na faixa (faixa é vertical, centro_x é o meio dela)
-                x = lane.centerx - largura_carro // 2
+                x = lane - largura_carro // 2
 
                 # Y: posição vertical aleatória ao longo da tela
                 y = random.randint(0, HEIGHT)
