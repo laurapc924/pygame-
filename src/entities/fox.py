@@ -20,13 +20,13 @@ class Fox:
         for event in pygame.event.get():
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_DOWN:
-                    self.y += 5
+                    self.y += 20
                 if event.key == pygame.K_UP:
-                    self.y -= 5
+                    self.y -= 20
                 if event.key == pygame.K_RIGHT:
-                    self.x += 5
+                    self.x += 20
                 if event.key == pygame.K_LEFT:
-                    self.x -= 5
+                    self.x -= 20
 
     def draw(self, screen):
         """Desenha a raposa (placeholder: retângulo laranja)."""
