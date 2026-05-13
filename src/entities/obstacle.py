@@ -3,7 +3,7 @@ from src.settings import HEIGHT
 
 
 class Obstacle(pygame.sprite.Sprite):
-    #Representa um carro/obstáculo que se move horizontalmente em uma faixa
+    #Representa um carro/obstáculo que se move verticalmente em uma faixa
 
     def __init__(self, x, y, width, height, speed, color, direction):
         
