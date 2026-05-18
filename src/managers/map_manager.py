@@ -3,11 +3,8 @@
 import pygame
 import random
 
-from src.entities.obstacle import Obstacle 
-from src.settings import HEIGHT
-
-
-from src.settings import GRAY_ROAD, GREEN_FOREST, HEIGHT, WHITE, WIDTH
+from src.entities.obstacle import Obstacle
+from src.settings import GRAY_ROAD, GREEN_FOREST, HEIGHT, IMG_DIR, WHITE, WIDTH
 
 
 SIDE_STRIP_WIDTH = 120
@@ -18,6 +15,16 @@ LANE_WIDTH = ROAD_AREA_WIDTH // NUM_LANES
 DASH_LENGTH = 20
 DASH_GAP = 15
 DASH_THICKNESS = 3
+
+CAR_FILES = [
+    "car_red_1.png",
+    "car_blue_1.png",
+    "car_green_1.png",
+    "car_yellow_1.png",
+    "car_black_1.png",
+    "car_red_3.png",
+    "car_blue_2.png",
+]
 
 
 class MapManager:
@@ -37,53 +44,32 @@ class MapManager:
             for i in range(NUM_LANES)
         ]
         self.goal_zone = pygame.Rect(WIDTH - 80, 0, 60, HEIGHT)
+        self.car_images = self._load_car_images()
+
+    def _load_car_images(self):
+        cars_dir = IMG_DIR / "cars"
+        target_size = (50, 92)
+        images = []
+        for name in CAR_FILES:
+            img = pygame.image.load(str(cars_dir / name)).convert_alpha()
+            images.append(pygame.transform.smoothscale(img, target_size))
+        return images
+
     def spawn_obstacles(self):
-    
-
-        # "Saco" que guarda todos os carros
         self.obstacles = pygame.sprite.Group()
-
-        # Lista de centros X das faixas (já existe no seu código)
         lanes = self.get_lanes()
 
-        # Tamanho dos carros: como faixas são verticais e carros descem/sobem,
-        # eles ficam "deitados ao contrário": mais altos que largos
-        largura_carro = 40
-        altura_carro = 60
-
-        # Cores variadas pra cada carro
-        cores = [
-            (220, 60, 60),    # vermelho
-            (60, 100, 220),   # azul
-            (230, 200, 50),   # amarelo
-            (180, 60, 200),   # roxo
-            (60, 180, 100),   # verde
-            (240, 130, 30),   # laranja
-        ]
-
-        # Pra cada faixa, criar 2 carros
         for indice_faixa, lane in enumerate(lanes):
             # Alterna direção: faixa 0 desce, faixa 1 sobe, faixa 2 desce
-            if indice_faixa % 2 == 0:
-                direcao = 1   # desce
-            else:
-                direcao = -1  # sobe
+            direcao = 1 if indice_faixa % 2 == 0 else -1
 
-            for i in range(2):
-                # Velocidade aleatória
+            for _ in range(2):
                 velocidade = random.randint(150, 300)
-
-                # X: centralizar o carro na faixa (faixa é vertical, centro_x é o meio dela)
+                imagem = random.choice(self.car_images)
+                largura_carro = imagem.get_width()
                 x = lane - largura_carro // 2
-
-                # Y: posição vertical aleatória ao longo da tela
                 y = random.randint(0, HEIGHT)
-
-                # Cor aleatória
-                cor = random.choice(cores)
-
-                # Criar o carro e jogar no saco
-                carro = Obstacle(x, y, largura_carro, altura_carro, velocidade, cor, direcao)
+                carro = Obstacle(x, y, velocidade, direcao, imagem)
                 self.obstacles.add(carro)
 
     def draw(self, screen):
@@ -108,7 +94,7 @@ class MapManager:
     def get_lanes(self):
         """Retorna a posição x do centro de cada faixa de rua."""
         return [lane.centerx for lane in self.lanes]
-    
+
     def update_obstacles(self, dt):
         """Atualiza a posição de todos os carros."""
         self.obstacles.update(dt)

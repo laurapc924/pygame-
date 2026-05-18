@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir c:\\\\Users\\\\andre\\\\pygame-\\\\assets\\\\img)",
+      "WebFetch(domain:opengameart.org)"
+    ]
+  }
+}
