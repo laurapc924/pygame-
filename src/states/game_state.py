@@ -6,6 +6,8 @@ from src.entities.fox import Fox
 from src.managers.map_manager import MapManager
 from src.settings import HEIGHT
 from src.states.base_state import BaseState
+from src.states.game_over_state import GameOverState
+from src.states.victory_state import VictoryState
 
 
 class GameState(BaseState):
@@ -41,11 +43,12 @@ class GameState(BaseState):
             self.fox.reset_position()
             self.fox.invincible_timer = 1.5
             if self.fox.lives <= 0:
-                print("GAME OVER")
+                self.game.change_state(GameOverState(self.game))
+                return
         goal_zone = self.map_manager.get_goal_zone()
         if self.fox.rect.colliderect(goal_zone):
-            print("VITORIA!")
-            self.fox.reset_position()
+            self.game.change_state(VictoryState(self.game))
+            return
 
     def draw(self, screen):
         """Desenha mapa, obstáculos, raposa e HUD de vidas."""
