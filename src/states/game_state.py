@@ -25,6 +25,7 @@ class GameState(BaseState):
             speed_max=config["car_speed_max"],
             cars_per_lane=config["cars_per_lane"],
         )
+        self.map_manager.spawn_powerups()
         fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
@@ -35,6 +36,11 @@ class GameState(BaseState):
         self.transition_timer = 0
         self.transition_duration = 1.5
         self.transition_message = ""
+        self.invincible = False
+        self.invincible_timer = 0.0
+        self.invincible_duration = 3.0
+        self.blink_timer = 0.0
+        self.fox_visible = True
         self.game.sound_manager.play_music("assets/sounds/game.wav")
 
     def handle_events(self):
@@ -50,29 +56,72 @@ class GameState(BaseState):
         if not self.is_transitioning:
             self.fox.handle_events(events)
 
+    def _update_invincibility(self, dt):
+        """Decrementa o timer de invencibilidade do power-up e controla o piscar da raposa."""
+        if not self.invincible:
+            return
+        self.invincible_timer -= dt
+        self.blink_timer += dt
+        if self.blink_timer >= 0.1:
+            self.fox_visible = not self.fox_visible
+            self.blink_timer = 0.0
+        if self.invincible_timer <= 0:
+            self.invincible = False
+            self.fox_visible = True
+
+    def _collect_powerups(self):
+        """Verifica colisão com power-ups e aplica seus efeitos."""
+        coletados = pygame.sprite.spritecollide(self.fox, self.map_manager.powerups, True)
+        for powerup in coletados:
+            if powerup.type == "mushroom":
+                self.fox.lives += 1
+            elif powerup.type == "clover":
+                self.invincible = True
+                self.invincible_timer = self.invincible_duration
+                self.blink_timer = 0.0
+
+    def _advance_phase(self):
+        """Avança para a próxima fase, reposiciona a raposa e inicia a transição visual."""
+        self.level_manager.next_level()
+        nova_config = self.level_manager.get_config()
+        self.map_manager.spawn_obstacles(
+            speed_min=nova_config["car_speed_min"],
+            speed_max=nova_config["car_speed_max"],
+            cars_per_lane=nova_config["cars_per_lane"],
+        )
+        self.map_manager.spawn_powerups()
+        self.fox.reset_position()
+        self.transition_message = f"FASE {self.level_manager.current_level}"
+        self.is_transitioning = True
+        self.transition_timer = 0
+
     def update(self, dt):
-        """Atualiza a raposa, obstáculos, colisões, transição de fase e condição de vitória."""
+        """Atualiza a raposa, obstáculos, power-ups, colisões, transição e condição de vitória."""
         if self.is_transitioning:
             self.transition_timer += dt
             if self.transition_timer >= self.transition_duration:
                 self.is_transitioning = False
             return
 
+        self._update_invincibility(dt)
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
-        hits = pygame.sprite.spritecollide(
-            self.fox,
-            self.map_manager.obstacles,
-            False,
-            collided=lambda fox, car: fox.hitbox.colliderect(car.hitbox),
-        )
-        if hits and self.fox.invincible_timer <= 0:
-            self.fox.lives -= 1
-            self.fox.reset_position()
-            self.fox.invincible_timer = 1.5
-            if self.fox.lives <= 0:
-                self.game.change_state(GameOverState(self.game, self.score_manager))
-                return
+        self._collect_powerups()
+
+        if not self.invincible:
+            hits = pygame.sprite.spritecollide(
+                self.fox,
+                self.map_manager.obstacles,
+                False,
+                collided=lambda fox, car: fox.hitbox.colliderect(car.hitbox),
+            )
+            if hits and self.fox.invincible_timer <= 0:
+                self.fox.lives -= 1
+                self.fox.reset_position()
+                self.fox.invincible_timer = 1.5
+                if self.fox.lives <= 0:
+                    self.game.change_state(GameOverState(self.game, self.score_manager))
+                    return
 
         goal_zone = self.map_manager.get_goal_zone()
         if self.fox.rect.colliderect(goal_zone):
@@ -83,23 +132,15 @@ class GameState(BaseState):
                 self.game.change_state(VictoryState(self.game, self.score_manager))
                 return
 
-            self.level_manager.next_level()
-            nova_config = self.level_manager.get_config()
-            self.map_manager.spawn_obstacles(
-                speed_min=nova_config["car_speed_min"],
-                speed_max=nova_config["car_speed_max"],
-                cars_per_lane=nova_config["cars_per_lane"],
-            )
-            self.fox.reset_position()
-            self.transition_message = f"FASE {self.level_manager.current_level}"
-            self.is_transitioning = True
-            self.transition_timer = 0
+            self._advance_phase()
 
     def draw(self, screen):
-        """Desenha mapa, obstáculos, raposa, HUD e overlay de transição de fase."""
+        """Desenha mapa, power-ups, obstáculos, raposa (se visível), HUD e overlay de transição."""
         self.map_manager.draw(screen)
         self.map_manager.draw_obstacles(screen)
-        self.fox.draw(screen)
+        self.map_manager.draw_powerups(screen)
+        if self.fox_visible:
+            self.fox.draw(screen)
         hud_vidas = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
         screen.blit(hud_vidas, (10, 10))
         hud_pontos = self.font_hud.render(f"Pontos: {self.score_manager.current_score}", True, (255, 255, 255))
@@ -111,6 +152,11 @@ class GameState(BaseState):
             True, (255, 255, 255),
         )
         screen.blit(hud_fase, (10, 100))
+        if self.invincible:
+            hud_inv = self.font_hud.render(
+                f"Invencivel: {self.invincible_timer:.1f}s", True, (100, 255, 100)
+            )
+            screen.blit(hud_inv, (10, 130))
 
         if self.is_transitioning:
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)

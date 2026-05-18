@@ -4,6 +4,7 @@ import pygame
 import random
 
 from src.entities.obstacle import Obstacle
+from src.entities.powerup import PowerUp
 from src.settings import GRAY_ROAD, GREEN_FOREST, HEIGHT, IMG_DIR, WHITE, WIDTH
 
 
@@ -72,6 +73,20 @@ class MapManager:
                 y = random.randint(0, HEIGHT)
                 carro = Obstacle(x, y, velocidade, direcao, imagem)
                 self.obstacles.add(carro)
+
+    def spawn_powerups(self):
+        """Cria 2 power-ups aleatórios nas faixas (1 cogumelo, 1 trevo)."""
+        self.powerups = pygame.sprite.Group()
+        lane_centers = self.get_lanes()
+        for powerup_type in (PowerUp.TYPE_MUSHROOM, PowerUp.TYPE_CLOVER):
+            lane_x = random.choice(lane_centers)
+            x = lane_x - PowerUp.SIZE // 2
+            y = random.randint(50, HEIGHT - 80)
+            self.powerups.add(PowerUp(x, y, powerup_type))
+
+    def draw_powerups(self, screen):
+        """Desenha todos os power-ups na tela."""
+        self.powerups.draw(screen)
 
     def draw(self, screen):
         """Desenha as faixas laterais, as faixas de rua, as linhas tracejadas e a zona de chegada."""
