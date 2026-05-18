@@ -21,7 +21,7 @@ class GameState(BaseState):
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
         self.font_hud = pygame.font.SysFont(None, 36)
-        self.game.sound_manager.play_music("assets/sounds/game.mp3")
+        self.game.sound_manager.play_music("assets/sounds/game.wav")
 
     def handle_events(self):
         events = pygame.event.get()

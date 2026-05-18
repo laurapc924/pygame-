@@ -10,7 +10,7 @@ class MenuState(BaseState):
         self.font_title = pygame.font.SysFont(None, 80)
         self.font_medium = pygame.font.SysFont(None, 40)
         self.font_small = pygame.font.SysFont(None, 30)
-        self.game.sound_manager.play_music("assets/sounds/menu.mp3")
+        self.game.sound_manager.play_music("assets/sounds/menu.wav")
         
     def handle_events(self):
         for event in pygame.event.get():
