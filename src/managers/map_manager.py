@@ -55,7 +55,8 @@ class MapManager:
             images.append(pygame.transform.smoothscale(img, target_size))
         return images
 
-    def spawn_obstacles(self):
+    def spawn_obstacles(self, speed_min=150, speed_max=300, cars_per_lane=2):
+        """Cria os carros para cada faixa com a velocidade e quantidade especificadas."""
         self.obstacles = pygame.sprite.Group()
         lanes = self.get_lanes()
 
@@ -63,8 +64,8 @@ class MapManager:
             # Alterna direção: faixa 0 desce, faixa 1 sobe, faixa 2 desce
             direcao = 1 if indice_faixa % 2 == 0 else -1
 
-            for _ in range(2):
-                velocidade = random.randint(150, 300)
+            for _ in range(cars_per_lane):
+                velocidade = random.randint(speed_min, speed_max)
                 imagem = random.choice(self.car_images)
                 largura_carro = imagem.get_width()
                 x = lane - largura_carro // 2
