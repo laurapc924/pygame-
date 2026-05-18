@@ -4,6 +4,7 @@ import pygame
 
 from src.entities.fox import Fox
 from src.managers.map_manager import MapManager
+from src.managers.score_manager import ScoreManager
 from src.settings import HEIGHT
 from src.states.base_state import BaseState
 from src.states.game_over_state import GameOverState
@@ -21,6 +22,7 @@ class GameState(BaseState):
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
         self.font_hud = pygame.font.SysFont(None, 36)
+        self.score_manager = ScoreManager()
         self.game.sound_manager.play_music("assets/sounds/game.wav")
 
     def handle_events(self):
@@ -49,17 +51,22 @@ class GameState(BaseState):
             self.fox.reset_position()
             self.fox.invincible_timer = 1.5
             if self.fox.lives <= 0:
-                self.game.change_state(GameOverState(self.game))
+                self.game.change_state(GameOverState(self.game, self.score_manager))
                 return
         goal_zone = self.map_manager.get_goal_zone()
         if self.fox.rect.colliderect(goal_zone):
-            self.game.change_state(VictoryState(self.game))
+            self.score_manager.add_points(100)
+            self.game.change_state(VictoryState(self.game, self.score_manager))
             return
 
     def draw(self, screen):
-        """Desenha mapa, obstáculos, raposa e HUD de vidas."""
+        """Desenha mapa, obstáculos, raposa e HUD de vidas, pontos e recorde."""
         self.map_manager.draw(screen)
         self.map_manager.draw_obstacles(screen)
         self.fox.draw(screen)
-        hud_text = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
-        screen.blit(hud_text, (10, 10))
+        hud_vidas = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
+        screen.blit(hud_vidas, (10, 10))
+        hud_pontos = self.font_hud.render(f"Pontos: {self.score_manager.current_score}", True, (255, 255, 255))
+        screen.blit(hud_pontos, (10, 40))
+        hud_recorde = self.font_hud.render(f"Recorde: {self.score_manager.highscore}", True, (255, 255, 255))
+        screen.blit(hud_recorde, (10, 70))
