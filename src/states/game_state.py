@@ -18,7 +18,7 @@ class GameState(BaseState):
         self.map_manager = MapManager()
         self.map_manager.spawn_obstacles()
         fox_x = 30
-        fox_y = HEIGHT // 2 - 20
+        fox_y = HEIGHT // 2 - 64
         self.fox = Fox(fox_x, fox_y)
         self.font_hud = pygame.font.SysFont(None, 36)
 
@@ -37,7 +37,12 @@ class GameState(BaseState):
         """Atualiza a raposa, obstáculos, verifica colisões e condição de vitória."""
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
-        hits = pygame.sprite.spritecollide(self.fox, self.map_manager.obstacles, False)
+        hits = pygame.sprite.spritecollide(
+            self.fox,
+            self.map_manager.obstacles,
+            False,
+            collided=lambda fox, car: fox.hitbox.colliderect(car.hitbox),
+        )
         if hits and self.fox.invincible_timer <= 0:
             self.fox.lives -= 1
             self.fox.reset_position()
