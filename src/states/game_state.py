@@ -32,7 +32,7 @@ class GameState(BaseState):
         self.fox.handle_events(events)
 
     def update(self, dt):
-        """Atualiza a raposa, obstáculos e verifica colisões."""
+        """Atualiza a raposa, obstáculos, verifica colisões e condição de vitória."""
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
         hits = pygame.sprite.spritecollide(self.fox, self.map_manager.obstacles, False)
@@ -42,6 +42,10 @@ class GameState(BaseState):
             self.fox.invincible_timer = 1.5
             if self.fox.lives <= 0:
                 print("GAME OVER")
+        goal_zone = self.map_manager.get_goal_zone()
+        if self.fox.rect.colliderect(goal_zone):
+            print("VITORIA!")
+            self.fox.reset_position()
 
     def draw(self, screen):
         """Desenha mapa, obstáculos, raposa e HUD de vidas."""

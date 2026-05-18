@@ -24,6 +24,7 @@ class MapManager:
     """Desenha o mapa e expõe a posição das faixas para outras entidades."""
 
     def __init__(self):
+        """Inicializa as faixas laterais de floresta, as faixas de rua e a zona de chegada."""
         self.left_strip = pygame.Rect(0, 0, SIDE_STRIP_WIDTH, HEIGHT)
         right_strip_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
         self.right_strip = pygame.Rect(
@@ -35,6 +36,7 @@ class MapManager:
             )
             for i in range(NUM_LANES)
         ]
+        self.goal_zone = pygame.Rect(WIDTH - 80, 0, 60, HEIGHT)
     def spawn_obstacles(self):
     
 
@@ -85,6 +87,7 @@ class MapManager:
                 self.obstacles.add(carro)
 
     def draw(self, screen):
+        """Desenha as faixas laterais, as faixas de rua, as linhas tracejadas e a zona de chegada."""
         screen.fill(GREEN_FOREST)
         pygame.draw.rect(screen, GREEN_FOREST, self.left_strip)
         pygame.draw.rect(screen, GREEN_FOREST, self.right_strip)
@@ -93,6 +96,7 @@ class MapManager:
         for i in range(1, NUM_LANES):
             x = SIDE_STRIP_WIDTH + i * LANE_WIDTH
             self._draw_dashed_line(screen, x)
+        pygame.draw.rect(screen, (255, 215, 0), self.goal_zone)
 
     def _draw_dashed_line(self, screen, x):
         y = 0
@@ -112,3 +116,7 @@ class MapManager:
     def draw_obstacles(self, screen):
         """Desenha todos os carros na tela."""
         self.obstacles.draw(screen)
+
+    def get_goal_zone(self):
+        """Retorna o pygame.Rect que representa a zona de chegada (toca da raposa)."""
+        return self.goal_zone
