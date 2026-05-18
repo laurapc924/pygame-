@@ -10,7 +10,7 @@ SPEED = 300  # pixels por segundo
 # Layout da sprite sheet fox.png (3 colunas x 4 linhas, frames 48x64).
 # Linhas: 0=N, 1=E, 2=S, 3=W. 3 frames por direção (ciclo de caminhada).
 FOX_FRAME_W = 48
-FOX_FRAME_H = 64
+FOX_FRAME_H = 28
 FOX_FRAMES_PER_DIR = 3
 FOX_DIR_ROWS = {"up": 0, "right": 1, "down": 2, "left": 3}
 FOX_SCALE = 2  # multiplicador de tamanho da raposa em tela
@@ -43,13 +43,13 @@ class Fox:
         self.image = self._frames[self.facing][self.frame_index]
 
     def _load_frames(self):
-        sheet = pygame.image.load(str(IMG_DIR / "fox.png")).convert_alpha()
         frames = {}
         for direction, row in FOX_DIR_ROWS.items():
+            sheet = pygame.image.load(str(IMG_DIR / f"fox{row}.png")).convert_alpha()
             direction_frames = []
             for col in range(FOX_FRAMES_PER_DIR):
                 rect = pygame.Rect(
-                    col * FOX_FRAME_W, row * FOX_FRAME_H, FOX_FRAME_W, FOX_FRAME_H
+                    col * FOX_FRAME_W, 0, FOX_FRAME_W, FOX_FRAME_H
                 )
                 frame = sheet.subsurface(rect).copy()
                 scaled = pygame.transform.scale(
@@ -58,6 +58,7 @@ class Fox:
                 direction_frames.append(scaled)
             frames[direction] = direction_frames
         return frames
+
 
     def handle_events(self, events):
         """Recebe a lista de eventos do frame atual (sem consumir do pygame).

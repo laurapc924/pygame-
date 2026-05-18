@@ -20,7 +20,11 @@ class Game:
         pygame.display.set_caption(TITLE)
         self.clock = pygame.time.Clock()
         self.running = True
+        from src.managers.sound_manager import SoundManager
+        self.sound_manager = SoundManager()
+
         self.current_state = MenuState(self)
+        
 
     def change_state(self, new_state):
         """Muda para um novo estado do jogo.

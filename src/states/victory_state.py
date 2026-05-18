@@ -14,6 +14,7 @@ class VictoryState(BaseState):
         super().__init__(game)
         self.font_titulo = pygame.font.SysFont(None, 100)
         self.font_instrucoes = pygame.font.SysFont(None, 36)
+        self.game.sound_manager.play_sfx(self.game.sound_manager.sfx_victory)
 
     def handle_events(self):
         """Processa eventos: ENTER volta ao menu, ESC encerra o jogo."""

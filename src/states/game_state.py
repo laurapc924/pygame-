@@ -18,9 +18,10 @@ class GameState(BaseState):
         self.map_manager = MapManager()
         self.map_manager.spawn_obstacles()
         fox_x = 30
-        fox_y = HEIGHT // 2 - 64
+        fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
         self.font_hud = pygame.font.SysFont(None, 36)
+        self.game.sound_manager.play_music("assets/sounds/game.mp3")
 
     def handle_events(self):
         events = pygame.event.get()
