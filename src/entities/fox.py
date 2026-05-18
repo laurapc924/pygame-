@@ -7,13 +7,14 @@ from src.settings import HEIGHT, IMG_DIR, WIDTH
 
 SPEED = 300  # pixels por segundo
 
-# Layout da sprite sheet fox-NESW.png (3 colunas x 4 linhas, frames 48x64).
-# Linhas: 0=N, 1=E, 2=S, 3=W. Coluna 1 = frame idle.
+# Layout da sprite sheet fox.png (3 colunas x 4 linhas, frames 48x64).
+# Linhas: 0=N, 1=E, 2=S, 3=W. 3 frames por direção (ciclo de caminhada).
 FOX_FRAME_W = 48
 FOX_FRAME_H = 64
+FOX_FRAMES_PER_DIR = 3
 FOX_DIR_ROWS = {"up": 0, "right": 1, "down": 2, "left": 3}
-FOX_IDLE_COL = 1
 FOX_SCALE = 2  # multiplicador de tamanho da raposa em tela
+ANIMATION_SPEED = 0.15  # segundos por frame
 # Hitbox apertada em torno do corpo (ignora cauda/transparência).
 FOX_HITBOX_W = 56
 FOX_HITBOX_H = 72
@@ -36,20 +37,26 @@ class Fox:
         self.lives = 3
         self.invincible_timer = 0.0
         self.facing = "right"
+        self.frame_index = 0
+        self.animation_timer = 0.0
         self._frames = self._load_frames()
-        self.image = self._frames[self.facing]
+        self.image = self._frames[self.facing][self.frame_index]
 
     def _load_frames(self):
         sheet = pygame.image.load(str(IMG_DIR / "fox.png")).convert_alpha()
         frames = {}
         for direction, row in FOX_DIR_ROWS.items():
-            rect = pygame.Rect(
-                FOX_IDLE_COL * FOX_FRAME_W, row * FOX_FRAME_H, FOX_FRAME_W, FOX_FRAME_H
-            )
-            frame = sheet.subsurface(rect).copy()
-            frames[direction] = pygame.transform.scale(
-                frame, (FOX_FRAME_W * FOX_SCALE, FOX_FRAME_H * FOX_SCALE)
-            )
+            direction_frames = []
+            for col in range(FOX_FRAMES_PER_DIR):
+                rect = pygame.Rect(
+                    col * FOX_FRAME_W, row * FOX_FRAME_H, FOX_FRAME_W, FOX_FRAME_H
+                )
+                frame = sheet.subsurface(rect).copy()
+                scaled = pygame.transform.scale(
+                    frame, (FOX_FRAME_W * FOX_SCALE, FOX_FRAME_H * FOX_SCALE)
+                )
+                direction_frames.append(scaled)
+            frames[direction] = direction_frames
         return frames
 
     def handle_events(self, events):
@@ -67,25 +74,40 @@ class Fox:
             dt: Delta time em segundos.
         """
         keys = pygame.key.get_pressed()
+        moving = False
         if keys[pygame.K_RIGHT]:
             self.x += SPEED * dt
             self.facing = "right"
+            moving = True
         if keys[pygame.K_LEFT]:
             self.x -= SPEED * dt
             self.facing = "left"
+            moving = True
         if keys[pygame.K_DOWN]:
             self.y += SPEED * dt
             self.facing = "down"
+            moving = True
         if keys[pygame.K_UP]:
             self.y -= SPEED * dt
             self.facing = "up"
+            moving = True
 
         self.x = max(0.0, min(self.x, WIDTH - self.width))
         self.y = max(0.0, min(self.y, HEIGHT - self.height))
         self.rect.x = int(self.x)
         self.rect.y = int(self.y)
         self.hitbox.center = self.rect.center
-        self.image = self._frames[self.facing]
+
+        if moving:
+            self.animation_timer += dt
+            if self.animation_timer >= ANIMATION_SPEED:
+                self.animation_timer -= ANIMATION_SPEED
+                self.frame_index = (self.frame_index + 1) % FOX_FRAMES_PER_DIR
+        else:
+            self.frame_index = 0
+            self.animation_timer = 0.0
+
+        self.image = self._frames[self.facing][self.frame_index]
         if self.invincible_timer > 0:
             self.invincible_timer -= dt
 
