@@ -11,6 +11,8 @@ HITBOX_MARGIN_Y = 8
 class Obstacle(pygame.sprite.Sprite):
     """Carro que se move verticalmente em uma faixa, usando sprite top-down."""
 
+    speed_multiplier = 1.0
+
     def __init__(self, x, y, speed, direction, image):
         super().__init__()
 
@@ -31,7 +33,7 @@ class Obstacle(pygame.sprite.Sprite):
         self.direction = direction
 
     def update(self, dt):
-        self.rect.y += self.speed * self.direction * dt
+        self.rect.y += self.speed * self.direction * dt * Obstacle.speed_multiplier
 
         # Loop infinito: se sair de um lado, reaparece no outro
         if self.direction == 1 and self.rect.top > HEIGHT:

@@ -3,6 +3,7 @@
 import pygame
 
 from src.entities.fox import Fox
+from src.entities.obstacle import Obstacle
 from src.managers.level_manager import LevelManager
 from src.managers.map_manager import MapManager
 from src.managers.score_manager import ScoreManager
@@ -17,6 +18,7 @@ class GameState(BaseState):
 
     def __init__(self, game):
         super().__init__(game)
+        Obstacle.speed_multiplier = 1.0
         self.level_manager = LevelManager()
         self.map_manager = MapManager()
         config = self.level_manager.get_config()
@@ -29,7 +31,7 @@ class GameState(BaseState):
         fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
-        self.font_hud = pygame.font.SysFont(None, 36)
+        self.font_hud = pygame.font.SysFont(None, 22)
         self.font_transition = pygame.font.SysFont(None, 100)
         self.score_manager = ScoreManager()
         self.is_transitioning = False
@@ -41,18 +43,30 @@ class GameState(BaseState):
         self.invincible_duration = 3.0
         self.blink_timer = 0.0
         self.fox_visible = True
+        self.instinct_active = False
+        self.instinct_timer = 0.0
+        self.instinct_duration = 2.0
+        self.instinct_cooldown = 0.0
+        self.instinct_cooldown_max = 10.0
+        self.font_instinct = pygame.font.SysFont(None, 48)
         self.game.sound_manager.play_music("assets/sounds/game.wav")
 
     def handle_events(self):
-        """Processa teclado: ESC encerra, demais eventos vão para a raposa."""
+        """Processa teclado: ESC encerra, SHIFT ativa Instinto, demais eventos vão para a raposa."""
         events = pygame.event.get()
         for event in events:
             if event.type == pygame.QUIT:
                 self.game.running = False
                 return
-            if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-                self.game.running = False
-                return
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    self.game.running = False
+                    return
+                if event.key in (pygame.K_LSHIFT, pygame.K_RSHIFT):
+                    if not self.instinct_active and self.instinct_cooldown <= 0:
+                        self.instinct_active = True
+                        self.instinct_timer = self.instinct_duration
+                        Obstacle.speed_multiplier = 0.3
         if not self.is_transitioning:
             self.fox.handle_events(events)
 
@@ -68,6 +82,17 @@ class GameState(BaseState):
         if self.invincible_timer <= 0:
             self.invincible = False
             self.fox_visible = True
+
+    def _update_instinct(self, dt):
+        """Decrementa o timer do Instinto ativo e o cooldown após o uso."""
+        if self.instinct_active:
+            self.instinct_timer -= dt
+            if self.instinct_timer <= 0:
+                self.instinct_active = False
+                Obstacle.speed_multiplier = 1.0
+                self.instinct_cooldown = self.instinct_cooldown_max
+        elif self.instinct_cooldown > 0:
+            self.instinct_cooldown = max(0.0, self.instinct_cooldown - dt)
 
     def _collect_powerups(self):
         """Verifica colisão com power-ups e aplica seus efeitos."""
@@ -103,6 +128,7 @@ class GameState(BaseState):
                 self.is_transitioning = False
             return
 
+        self._update_instinct(dt)
         self._update_invincibility(dt)
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
@@ -144,19 +170,40 @@ class GameState(BaseState):
         hud_vidas = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
         screen.blit(hud_vidas, (10, 10))
         hud_pontos = self.font_hud.render(f"Pontos: {self.score_manager.current_score}", True, (255, 255, 255))
-        screen.blit(hud_pontos, (10, 40))
+        screen.blit(hud_pontos, (10, 34))
         hud_recorde = self.font_hud.render(f"Recorde: {self.score_manager.highscore}", True, (255, 255, 255))
-        screen.blit(hud_recorde, (10, 70))
+        screen.blit(hud_recorde, (10, 58))
         hud_fase = self.font_hud.render(
             f"Fase: {self.level_manager.current_level}/{self.level_manager.TOTAL_LEVELS}",
             True, (255, 255, 255),
         )
-        screen.blit(hud_fase, (10, 100))
+        screen.blit(hud_fase, (10, 82))
         if self.invincible:
             hud_inv = self.font_hud.render(
-                f"Invencivel: {self.invincible_timer:.1f}s", True, (100, 255, 100)
+                f"Inv: {self.invincible_timer:.1f}s", True, (100, 255, 100)
             )
-            screen.blit(hud_inv, (10, 130))
+            screen.blit(hud_inv, (10, 106))
+
+        barra_x, barra_y = 10, 152
+        barra_largura, barra_altura = 100, 14
+        texto_label = self.font_hud.render("Instinto", True, (255, 255, 255))
+        screen.blit(texto_label, (barra_x, barra_y - 22))
+        pygame.draw.rect(screen, (60, 60, 60), (barra_x, barra_y, barra_largura, barra_altura))
+        if self.instinct_active:
+            fill_ratio = self.instinct_timer / self.instinct_duration
+            cor = (50, 200, 220)
+        elif self.instinct_cooldown > 0:
+            fill_ratio = 1.0 - (self.instinct_cooldown / self.instinct_cooldown_max)
+            cor = (220, 130, 30)
+        else:
+            fill_ratio = 1.0
+            cor = (50, 200, 50)
+        pygame.draw.rect(screen, cor, (barra_x, barra_y, int(barra_largura * fill_ratio), barra_altura))
+
+        if self.instinct_active:
+            texto_ativo = self.font_instinct.render("INSTINTO ATIVO", True, (50, 200, 220))
+            rect_texto = texto_ativo.get_rect(center=(WIDTH // 2, HEIGHT - 50))
+            screen.blit(texto_ativo, rect_texto)
 
         if self.is_transitioning:
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
