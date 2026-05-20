@@ -12,7 +12,7 @@ class LevelManager:
         self.configs = {
             1: {"car_speed_min": 150, "car_speed_max": 300, "cars_per_lane": 2, "points": 100},
             2: {"car_speed_min": 200, "car_speed_max": 400, "cars_per_lane": 3, "points": 200},
-            3: {"car_speed_min": 250, "car_speed_max": 500, "cars_per_lane": 4, "points": 300},
+            3: {"car_speed_min": 220, "car_speed_max": 420, "cars_per_lane": 3, "points": 300},
         }
 
     def get_config(self):
