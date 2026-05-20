@@ -43,3 +43,6 @@ dist/
 
 # Assets / data
 *.pyc
+pycache/
+.env
+data/highscore.txt
