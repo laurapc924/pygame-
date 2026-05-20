@@ -10,6 +10,7 @@ from src.managers.score_manager import ScoreManager
 from src.settings import HEIGHT, WIDTH
 from src.states.base_state import BaseState
 from src.states.game_over_state import GameOverState
+from src.states.pause_state import PauseState
 from src.states.victory_state import VictoryState
 
 
@@ -59,6 +60,9 @@ class GameState(BaseState):
                 self.game.running = False
                 return
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_p:
+                    self.game.change_state(PauseState(self.game, self))
+                    return
                 if event.key == pygame.K_ESCAPE:
                     self.game.running = False
                     return
@@ -122,6 +126,9 @@ class GameState(BaseState):
 
     def update(self, dt):
         """Atualiza a raposa, obstáculos, power-ups, colisões, transição e condição de vitória."""
+        if dt > 0.1:
+            dt = 0.016
+
         if self.is_transitioning:
             self.transition_timer += dt
             if self.transition_timer >= self.transition_duration:

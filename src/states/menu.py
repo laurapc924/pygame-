@@ -10,6 +10,7 @@ class MenuState(BaseState):
         self.font_title = pygame.font.SysFont(None, 80)
         self.font_medium = pygame.font.SysFont(None, 40)
         self.font_small = pygame.font.SysFont(None, 30)
+        self.font_pause_info = pygame.font.SysFont(None, 24)
         self.game.sound_manager.play_music("assets/sounds/menu.wav")
         
     def handle_events(self):
@@ -34,6 +35,9 @@ class MenuState(BaseState):
     
         medio = self.font_medium.render("Pressione ENTER para jogar", True, WHITE)
         screen.blit(medio, (screen.get_width() // 2 - medio.get_width() // 2, HEIGHT // 2))
+
+        pausa = self.font_pause_info.render("P pausa durante o jogo", True, (180, 180, 180))
+        screen.blit(pausa, (screen.get_width() // 2 - pausa.get_width() // 2, HEIGHT // 2 + 38))
     
         pequeno = self.font_small.render("Pressione ESC para sair", True, WHITE)
-        screen.blit(pequeno, (screen.get_width() // 2 - pequeno.get_width() // 2, HEIGHT // 2 + 60))
+        screen.blit(pequeno, (screen.get_width() // 2 - pequeno.get_width() // 2, HEIGHT // 2 + 75))
