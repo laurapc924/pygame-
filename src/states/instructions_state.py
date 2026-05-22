@@ -15,6 +15,7 @@ from src.settings import (
 from src.states.base_state import BaseState
 from src.utils.sprite_factory import (
     criar_cogumelo,
+    criar_raposa_estatica,
     criar_trevo,
     desenhar_gradiente_vertical,
     desenhar_painel,
@@ -22,7 +23,7 @@ from src.utils.sprite_factory import (
 )
 
 
-# Dimensões padrão de um painel de seção e do painel de rodapé.
+# Dimensões padrão de um painel de seção.
 PAINEL_W = 460
 PAINEL_H = 200
 
@@ -31,9 +32,9 @@ class InstructionsState(BaseState):
     """Exibe o tutorial: objetivo, controles, itens especiais e habilidade."""
 
     def __init__(self, game):
-        """Inicializa fontes, background com gradiente e ícones decorativos."""
+        """Inicializa fontes, background, nuvens animadas e ícones decorativos."""
         super().__init__(game)
-        self.font_titulo = pygame.font.SysFont(None, 64)
+        self.font_titulo = pygame.font.SysFont(None, 64, bold=True)
         self.font_secao = pygame.font.SysFont(None, 34)
         self.font_texto = pygame.font.SysFont(None, 26)
         self.font_rodape = pygame.font.SysFont(None, 22)
@@ -43,6 +44,7 @@ class InstructionsState(BaseState):
 
         self.icone_cogumelo = criar_cogumelo(30)
         self.icone_trevo = criar_trevo(30)
+        self.raposa = criar_raposa_estatica(70, 70)
 
     def handle_events(self):
         """Processa eventos: M ou ESC voltam ao menu."""
@@ -103,9 +105,10 @@ class InstructionsState(BaseState):
             screen.blit(texto_surf, (px + 82, linha_y + 4))
 
     def draw(self, screen):
-        """Desenha o background, o título e os painéis com as instruções."""
+        """Desenha o fundo, o título, a raposa e os painéis de instruções."""
         screen.blit(self.background, (0, 0))
 
+        screen.blit(self.raposa, (40, 12))
         desenhar_titulo_estilizado(
             screen, "COMO JOGAR", self.font_titulo, WIDTH // 2, 44, COR_DOURADO
         )

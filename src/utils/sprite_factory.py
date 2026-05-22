@@ -264,88 +264,99 @@ def desenhar_estrela(surface, cx, cy, raio, cor):
 
 
 def criar_raposa_estatica(width=80, height=80, olhos_fechados=False):
-    """Cria a Surface de uma raposa fofa de frente, para usar como decoração.
+    """Cria a Surface de uma raposa em perfil, para usar como decoração.
+
+    Desenha uma raposa sentada vista de lado (focinho voltado à direita),
+    com cauda peluda de ponta branca, orelhas pontudas e patas escuras.
 
     Args:
         width: Largura da Surface em pixels.
         height: Altura da Surface em pixels.
-        olhos_fechados: Se True, desenha olhos fechados (raposa triste).
+        olhos_fechados: Se True, desenha o olho fechado (raposa triste).
 
     Returns:
         pygame.Surface com fundo transparente contendo a raposa.
     """
     surf = pygame.Surface((width, height), pygame.SRCALPHA)
-    laranja = (230, 130, 50)
-    branco = (240, 240, 235)
-    preto = (30, 30, 30)
+    laranja = (203, 106, 42)
+    laranja_esc = (158, 78, 30)
+    branco = (244, 240, 232)
+    preto = (38, 32, 30)
+    w, h = width, height
 
-    cx = width // 2
+    def pt(fx, fy):
+        """Converte coordenadas fracionárias (0 a 1) em pixels da surface."""
+        return (int(w * fx), int(h * fy))
 
-    # Cauda peluda atrás do corpo, com a ponta branca.
-    cauda_r = width // 5
-    cauda_x = cx - int(width * 0.3)
-    cauda_y = int(height * 0.66)
-    pygame.draw.circle(surf, laranja, (cauda_x, cauda_y), cauda_r)
-    pygame.draw.circle(
-        surf, laranja, (cauda_x - cauda_r // 2, cauda_y + cauda_r // 2), cauda_r
-    )
-    pygame.draw.circle(
-        surf, branco, (cauda_x - cauda_r, cauda_y + cauda_r), cauda_r // 2
-    )
+    # Cauda peluda atrás do corpo, drapeada para baixo, com a ponta branca.
+    for fx, fy, fr in [
+        (0.23, 0.44, 0.15),
+        (0.15, 0.58, 0.17),
+        (0.13, 0.74, 0.17),
+        (0.19, 0.89, 0.15),
+    ]:
+        pygame.draw.circle(surf, laranja, pt(fx, fy), int(w * fr))
+    pygame.draw.circle(surf, branco, pt(0.20, 0.93), int(w * 0.115))
 
-    # Corpo: oval laranja.
-    corpo = pygame.Rect(0, 0, int(width * 0.52), int(height * 0.44))
-    corpo.center = (cx, int(height * 0.74))
+    # Corpo e ancas (raposa sentada).
+    corpo = pygame.Rect(0, 0, int(w * 0.54), int(h * 0.54))
+    corpo.center = pt(0.45, 0.63)
     pygame.draw.ellipse(surf, laranja, corpo)
 
-    # Barriga branca menor.
-    barriga = pygame.Rect(0, 0, int(width * 0.28), int(height * 0.30))
-    barriga.center = (cx, int(height * 0.80))
-    pygame.draw.ellipse(surf, branco, barriga)
-
-    # Cabeça: círculo laranja.
-    cabeca_r = int(width * 0.28)
-    cabeca_y = int(height * 0.40)
-    pygame.draw.circle(surf, laranja, (cx, cabeca_y), cabeca_r)
-
-    # Orelhas triangulares (apontando pra cima e pra fora) com interior branco.
-    for lado in (-1, 1):
-        base_int = (cx + lado * int(cabeca_r * 0.20), cabeca_y - int(cabeca_r * 0.70))
-        base_ext = (cx + lado * int(cabeca_r * 1.00), cabeca_y - int(cabeca_r * 0.35))
-        ponta = (cx + lado * int(cabeca_r * 0.72), cabeca_y - int(cabeca_r * 1.55))
-        pygame.draw.polygon(surf, laranja, [base_int, base_ext, ponta])
-        # Interior branco: triângulo menor encolhido em direção à ponta.
-        meio_base = (
-            (base_int[0] + base_ext[0]) // 2,
-            (base_int[1] + base_ext[1]) // 2,
-        )
-        meio_int = ((base_int[0] + ponta[0]) // 2, (base_int[1] + ponta[1]) // 2)
-        meio_ext = ((base_ext[0] + ponta[0]) // 2, (base_ext[1] + ponta[1]) // 2)
-        pygame.draw.polygon(surf, branco, [meio_base, meio_int, meio_ext])
-
-    # Focinho branco em volta do nariz.
-    focinho = pygame.Rect(0, 0, int(cabeca_r * 1.1), int(cabeca_r * 0.85))
-    focinho.center = (cx, cabeca_y + cabeca_r // 3)
-    pygame.draw.ellipse(surf, branco, focinho)
-
-    # Olhos.
-    olho_dx = cabeca_r // 2
-    olho_y = cabeca_y - cabeca_r // 6
-    olho_r = max(2, width // 22)
-    if olhos_fechados:
-        for lado in (-1, 1):
-            ex = cx + lado * olho_dx
-            pygame.draw.line(
-                surf, preto, (ex - olho_r, olho_y), (ex + olho_r, olho_y), 3
-            )
-    else:
-        for lado in (-1, 1):
-            pygame.draw.circle(surf, preto, (cx + lado * olho_dx, olho_y), olho_r)
-
-    # Nariz preto pequeno no centro do focinho.
-    pygame.draw.circle(
-        surf, preto, (cx, cabeca_y + cabeca_r // 3), max(2, width // 20)
+    # Pata dianteira esguia até o chão e patas escuras (as "meias" da raposa).
+    perna = pygame.Rect(int(w * 0.54), int(h * 0.55), int(w * 0.12), int(h * 0.38))
+    pygame.draw.rect(surf, laranja, perna, border_radius=int(w * 0.05))
+    pygame.draw.ellipse(
+        surf, preto, (int(w * 0.31), int(h * 0.85), int(w * 0.21), int(h * 0.12))
     )
+    pygame.draw.ellipse(
+        surf, preto, (int(w * 0.52), int(h * 0.86), int(w * 0.16), int(h * 0.11))
+    )
+
+    # Peito/pescoço ligando o corpo à cabeça, com babado branco.
+    pygame.draw.polygon(
+        surf, laranja, [pt(0.48, 0.40), pt(0.74, 0.34), pt(0.71, 0.74), pt(0.45, 0.66)]
+    )
+    pygame.draw.polygon(
+        surf, branco, [pt(0.58, 0.45), pt(0.69, 0.43), pt(0.66, 0.74), pt(0.57, 0.70)]
+    )
+
+    # Cabeça.
+    cabeca = pt(0.66, 0.30)
+    cabeca_r = int(w * 0.165)
+    pygame.draw.circle(surf, laranja, cabeca, cabeca_r)
+
+    # Orelhas pontudas: a de trás mais escura, a da frente com interior preto.
+    pygame.draw.polygon(
+        surf, laranja_esc, [pt(0.71, 0.21), pt(0.82, 0.02), pt(0.84, 0.25)]
+    )
+    pygame.draw.polygon(surf, laranja, [pt(0.52, 0.25), pt(0.57, 0.00), pt(0.71, 0.19)])
+    pygame.draw.polygon(
+        surf, preto, [pt(0.565, 0.215), pt(0.585, 0.07), pt(0.665, 0.175)]
+    )
+
+    # Focinho pontudo voltado à direita, com a mandíbula inferior branca.
+    pygame.draw.polygon(surf, laranja, [pt(0.70, 0.22), pt(0.72, 0.43), pt(0.99, 0.34)])
+    pygame.draw.polygon(
+        surf, branco, [pt(0.72, 0.37), pt(0.74, 0.46), pt(0.99, 0.355)]
+    )
+
+    # Olho.
+    olho = pt(0.69, 0.28)
+    if olhos_fechados:
+        raio = max(2, int(w * 0.045))
+        pygame.draw.line(
+            surf,
+            preto,
+            (olho[0] - raio, olho[1]),
+            (olho[0] + raio, olho[1]),
+            max(2, int(w * 0.025)),
+        )
+    else:
+        pygame.draw.circle(surf, preto, olho, max(2, int(w * 0.038)))
+
+    # Nariz preto na ponta do focinho.
+    pygame.draw.circle(surf, preto, pt(0.97, 0.34), max(2, int(w * 0.042)))
 
     return surf
 
@@ -633,4 +644,28 @@ def criar_cerca(width, height):
         pygame.draw.rect(surf, madeira, (4, ty, width - 8, trav_h))
         pygame.draw.rect(surf, madeira_escura, (4, ty, width - 8, trav_h), 1)
 
+    return surf
+
+
+def criar_lua(raio):
+    """Cria a Surface de uma lua cheia pálida com um halo suave.
+
+    Args:
+        raio: Raio do disco da lua em pixels.
+
+    Returns:
+        pygame.Surface transparente contendo a lua e seu halo.
+    """
+    tam = int(raio * 3.4)
+    centro = tam // 2
+    surf = pygame.Surface((tam, tam), pygame.SRCALPHA)
+    # Halo difuso ao redor da lua.
+    pygame.draw.circle(surf, (235, 235, 200, 45), (centro, centro), int(raio * 1.6))
+    # Disco da lua.
+    pygame.draw.circle(surf, (240, 240, 212), (centro, centro), raio)
+    # Crateras.
+    cratera = (216, 216, 182)
+    pygame.draw.circle(surf, cratera, (centro + raio // 3, centro - raio // 4), raio // 5)
+    pygame.draw.circle(surf, cratera, (centro - raio // 3, centro + raio // 4), raio // 6)
+    pygame.draw.circle(surf, cratera, (centro + raio // 5, centro + raio // 2), raio // 8)
     return surf
