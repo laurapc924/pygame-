@@ -141,7 +141,7 @@ class GameOverState(BaseState):
         for estrela in self.estrelas:
             amp = 1.0 - estrela["brilho_base"]
             brilho = estrela["brilho_base"] + amp * math.sin(self.tempo * 2 + estrela["fase"])
-            tom = int(225 * brilho)
+            tom = max(0, int(225 * brilho))
             pygame.draw.circle(
                 screen, (tom, tom, max(0, tom - 20)), (estrela["x"], estrela["y"]), estrela["r"]
             )
