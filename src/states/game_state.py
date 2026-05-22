@@ -23,6 +23,7 @@ class GameState(BaseState):
         self.level_manager = LevelManager()
         self.map_manager = MapManager()
         config = self.level_manager.get_config()
+        self.map_manager.set_phase_config(config)
         self.map_manager.spawn_obstacles(
             speed_min=config["car_speed_min"],
             speed_max=config["car_speed_max"],
@@ -34,11 +35,15 @@ class GameState(BaseState):
         self.fox = Fox(fox_x, fox_y)
         self.font_hud = pygame.font.SysFont(None, 22)
         self.font_transition = pygame.font.SysFont(None, 100)
+        self.font_phase_name = pygame.font.SysFont(None, 60)
+        self.font_phase_subtitle = pygame.font.SysFont(None, 28)
         self.score_manager = ScoreManager()
         self.is_transitioning = False
         self.transition_timer = 0
         self.transition_duration = 1.5
         self.transition_message = ""
+        self.transition_phase_name = ""
+        self.transition_phase_subtitle = ""
         self.invincible = False
         self.invincible_timer = 0.0
         self.invincible_duration = 3.0
@@ -110,9 +115,10 @@ class GameState(BaseState):
                 self.blink_timer = 0.0
 
     def _advance_phase(self):
-        """Avança para a próxima fase, reposiciona a raposa e inicia a transição visual."""
+        """Avança para a próxima fase, reconfigura o mapa e inicia a transição visual."""
         self.level_manager.next_level()
         nova_config = self.level_manager.get_config()
+        self.map_manager.set_phase_config(nova_config)
         self.map_manager.spawn_obstacles(
             speed_min=nova_config["car_speed_min"],
             speed_max=nova_config["car_speed_max"],
@@ -121,6 +127,8 @@ class GameState(BaseState):
         self.map_manager.spawn_powerups()
         self.fox.reset_position()
         self.transition_message = f"FASE {self.level_manager.current_level}"
+        self.transition_phase_name = nova_config["name"]
+        self.transition_phase_subtitle = nova_config["subtitle"]
         self.is_transitioning = True
         self.transition_timer = 0
 
@@ -139,6 +147,7 @@ class GameState(BaseState):
         self._update_invincibility(dt)
         self.fox.update(dt)
         self.map_manager.update_obstacles(dt)
+        self.map_manager.update(dt)
         self._collect_powerups()
 
         if not self.invincible:
@@ -216,6 +225,15 @@ class GameState(BaseState):
             overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
             overlay.fill((0, 0, 0, 180))
             screen.blit(overlay, (0, 0))
-            msg_surf = self.font_transition.render(self.transition_message, True, (255, 215, 0))
-            msg_rect = msg_surf.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-            screen.blit(msg_surf, msg_rect)
+            linha1 = self.font_transition.render(
+                self.transition_message, True, (255, 215, 0)
+            )
+            screen.blit(linha1, linha1.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 50)))
+            linha2 = self.font_phase_name.render(
+                self.transition_phase_name, True, (255, 255, 255)
+            )
+            screen.blit(linha2, linha2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
+            linha3 = self.font_phase_subtitle.render(
+                self.transition_phase_subtitle, True, (200, 200, 200)
+            )
+            screen.blit(linha3, linha3.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 68)))

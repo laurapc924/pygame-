@@ -348,3 +348,289 @@ def criar_raposa_estatica(width=80, height=80, olhos_fechados=False):
     )
 
     return surf
+
+
+def _clarear(cor, fator):
+    """Clareia uma cor RGB misturando-a com branco pelo fator dado (0 a 1)."""
+    return tuple(min(255, int(c + (255 - c) * fator)) for c in cor[:3])
+
+
+def _escurecer(cor, fator):
+    """Escurece uma cor RGB multiplicando cada canal por (1 - fator)."""
+    return tuple(max(0, int(c * (1 - fator))) for c in cor[:3])
+
+
+def criar_grama_textura_colorida(width, height, cor_base):
+    """Cria uma textura de grama na cor dada, com pontinhos e tufos mais claros.
+
+    Igual a criar_grama_textura, mas usando cor_base como base em vez de uma
+    cor fixa; pontinhos e tufos são versões clareadas de cor_base.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+        cor_base: Cor (R, G, B) de base da grama.
+
+    Returns:
+        pygame.Surface opaca com a textura de grama.
+    """
+    surface = pygame.Surface((width, height))
+    surface.fill(cor_base)
+    cor_pontos = _clarear(cor_base, 0.3)
+    cor_tufos = _clarear(cor_base, 0.5)
+
+    num_pontos = (width * height) // 30
+    for _ in range(num_pontos):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        surface.set_at((x, y), cor_pontos)
+
+    num_tufos = (width * height) // 1500
+    for _ in range(num_tufos):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 5)
+        altura_tufo = random.randint(3, 4)
+        pygame.draw.line(surface, cor_tufos, (x, y), (x, y + altura_tufo))
+
+    return surface
+
+
+def criar_asfalto_textura_colorida(width, height, cor_base):
+    """Cria uma textura de asfalto na cor dada, com manchas escuras e pixels claros.
+
+    Igual a criar_asfalto_textura, mas usando cor_base; as manchas são versões
+    escurecidas e os pixels desgastados são versões clareadas de cor_base.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+        cor_base: Cor (R, G, B) de base do asfalto.
+
+    Returns:
+        pygame.Surface opaca com a textura de asfalto.
+    """
+    surface = pygame.Surface((width, height))
+    surface.fill(cor_base)
+    cor_manchas = _escurecer(cor_base, 0.2)
+    cor_claros = _clarear(cor_base, 0.25)
+
+    num_manchas = (width * height) // 400
+    for _ in range(num_manchas):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        raio = random.randint(2, 5)
+        pygame.draw.circle(surface, cor_manchas, (x, y), raio)
+
+    num_claros = (width * height) // 50
+    for _ in range(num_claros):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        surface.set_at((x, y), cor_claros)
+
+    return surface
+
+
+def criar_poste(width, height):
+    """Cria a Surface de um poste de luz (mastro cinza + luminária acesa no topo).
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo o poste.
+    """
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    cinza = (95, 95, 105)
+    cinza_escuro = (55, 55, 65)
+    luz = (255, 235, 150)
+    cx = width // 2
+    topo_y = height // 5
+
+    # Halo de luz ao redor da luminária.
+    halo = pygame.Surface((width, width), pygame.SRCALPHA)
+    pygame.draw.circle(halo, (255, 235, 150, 80), (width // 2, width // 2), width // 2)
+    surf.blit(halo, (cx - width // 2, topo_y - width // 2))
+
+    # Mastro vertical e base.
+    mastro_w = max(5, width // 9)
+    pygame.draw.rect(
+        surf, cinza, (cx - mastro_w // 2, topo_y, mastro_w, height - topo_y - 4)
+    )
+    pygame.draw.rect(surf, cinza_escuro, (cx - mastro_w, height - 8, mastro_w * 2, 8))
+
+    # Luminária no topo.
+    pygame.draw.ellipse(surf, cinza_escuro, (cx - 11, topo_y - 9, 22, 14))
+    pygame.draw.circle(surf, luz, (cx, topo_y + 2), 7)
+
+    return surf
+
+
+def criar_coqueiro(width, height):
+    """Cria a Surface de um coqueiro (tronco marrom + folhas de palmeira + cocos).
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo o coqueiro.
+    """
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    marrom = (140, 100, 60)
+    verde = (40, 140, 60)
+    verde_claro = (65, 175, 85)
+    cx = width // 2
+    topo_y = int(height * 0.34)
+
+    # Tronco em segmentos levemente ondulados.
+    seg_h = (height - topo_y) // 5
+    for i in range(5):
+        desloc = int(4 * math.sin(i))
+        pygame.draw.rect(
+            surf, marrom, (cx - 5 + desloc, topo_y + i * seg_h, 10, seg_h + 1)
+        )
+
+    # Folhas de palmeira: triângulos largos radiando e caindo do topo.
+    dirs = [
+        (-1.0, -0.15),
+        (-0.75, 0.35),
+        (-0.35, 0.55),
+        (0.35, 0.55),
+        (0.75, 0.35),
+        (1.0, -0.15),
+    ]
+    comprimento = width * 0.62
+    for j, (dx, dy) in enumerate(dirs):
+        norm = math.hypot(dx, dy)
+        ux, uy = dx / norm, dy / norm
+        tip = (cx + ux * comprimento, topo_y + uy * comprimento)
+        # Base da folha perpendicular à sua direção.
+        px, py = -uy, ux
+        b1 = (cx + px * 7, topo_y + py * 7)
+        b2 = (cx - px * 7, topo_y - py * 7)
+        cor = verde if j % 2 == 0 else verde_claro
+        pygame.draw.polygon(surf, cor, [b1, b2, tip])
+
+    # Cocos sob as folhas.
+    pygame.draw.circle(surf, marrom, (cx - 5, topo_y + 5), 4)
+    pygame.draw.circle(surf, marrom, (cx + 5, topo_y + 5), 4)
+
+    return surf
+
+
+def criar_pinheiro(width, height):
+    """Cria a Surface de um pinheiro nevado (camadas triangulares verdes com neve).
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo o pinheiro.
+    """
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    marrom = (90, 60, 40)
+    verde = (30, 95, 58)
+    neve = (240, 245, 250)
+    cx = width // 2
+
+    tronco_h = height // 7
+    pygame.draw.rect(surf, marrom, (cx - 5, height - tronco_h, 10, tronco_h))
+    area_h = height - tronco_h
+
+    # 3 camadas triangulares: i=0 é a base (larga e baixa).
+    camadas = []
+    for i in range(3):
+        base_y = area_h * (1 - i * 0.30)
+        apex_y = area_h * (0.45 - i * 0.225)
+        meia_largura = (width // 2) * (1 - i * 0.18)
+        camadas.append((apex_y, base_y, meia_largura))
+        pygame.draw.polygon(
+            surf,
+            verde,
+            [
+                (cx, apex_y),
+                (cx - meia_largura, base_y),
+                (cx + meia_largura, base_y),
+            ],
+        )
+
+    # Capas de neve no topo de cada camada (desenhadas por cima do verde).
+    for apex_y, base_y, meia_largura in camadas:
+        neve_base = apex_y + (base_y - apex_y) * 0.42
+        pygame.draw.polygon(
+            surf,
+            neve,
+            [
+                (cx, apex_y),
+                (cx - meia_largura * 0.5, neve_base),
+                (cx + meia_largura * 0.5, neve_base),
+            ],
+        )
+
+    return surf
+
+
+def criar_pedra(width, height):
+    """Cria a Surface de uma pedra/rocha cinzenta arredondada.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo a rocha.
+    """
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    cinza = (122, 122, 130)
+    cinza_claro = (162, 162, 170)
+    cinza_escuro = (85, 85, 95)
+
+    rocha_h = int(height * 0.55)
+    # Rocha principal ocupando a base da surface.
+    pygame.draw.ellipse(
+        surf, cinza, (width // 8, height - rocha_h, width - width // 4, rocha_h)
+    )
+    # Pedra menor ao lado, dando volume.
+    pygame.draw.ellipse(
+        surf, cinza_escuro, (0, height - rocha_h // 2, width // 2, rocha_h // 2)
+    )
+    # Brilho no topo da rocha principal.
+    pygame.draw.ellipse(
+        surf,
+        cinza_claro,
+        (width // 3, height - rocha_h + 4, width // 3, rocha_h // 3),
+    )
+
+    return surf
+
+
+def criar_cerca(width, height):
+    """Cria a Surface de um trecho de cerca de madeira (postes e travessas).
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo a cerca.
+    """
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    madeira = (150, 100, 55)
+    madeira_escura = (110, 70, 38)
+    topo = int(height * 0.38)
+    poste_w = max(6, width // 7)
+
+    # Dois postes verticais.
+    for px in (int(width * 0.18), int(width * 0.82) - poste_w):
+        pygame.draw.rect(surf, madeira, (px, topo, poste_w, height - topo))
+        pygame.draw.rect(surf, madeira_escura, (px, topo, poste_w, height - topo), 1)
+
+    # Duas travessas horizontais.
+    trav_h = max(5, height // 12)
+    for ty in (topo + (height - topo) // 4, topo + (height - topo) * 3 // 5):
+        pygame.draw.rect(surf, madeira, (4, ty, width - 8, trav_h))
+        pygame.draw.rect(surf, madeira_escura, (4, ty, width - 8, trav_h), 1)
+
+    return surf
