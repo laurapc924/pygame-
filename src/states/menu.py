@@ -1,16 +1,16 @@
 """Tela inicial (menu) do Fox Crossing."""
 
 import math
+import random
 
 import pygame
 
 from src.settings import (
     COR_DOURADO,
+    COR_LARANJA,
     COR_TEXTO,
     COR_TEXTO_SEC,
     COR_VERDE_CLARO,
-    COR_VERDE_ESCURO,
-    COR_VERDE_MEDIO,
     HEIGHT,
     WIDTH,
 )
@@ -19,22 +19,22 @@ from src.states.game_state import GameState
 from src.states.instructions_state import InstructionsState
 from src.utils.sprite_factory import (
     criar_arvore,
+    criar_arvore_silhueta,
     criar_raposa_estatica,
-    desenhar_gradiente_vertical,
+    desenhar_estrela,
+    desenhar_gradiente_multicolor,
     desenhar_painel,
-    desenhar_titulo_estilizado,
+    desenhar_titulo_glow,
 )
 
 
-# Altura da faixa de grama decorativa no rodapé da tela.
 GROUND_H = 96
 
 
 class MenuState(BaseState):
-    """Tela inicial: cenário de floresta, título e opções de navegação."""
+    """Tela inicial: floresta ao entardecer, título e opções de navegação."""
 
     def __init__(self, game):
-        """Inicializa fontes, cenário de floresta e a raposa decorativa."""
         super().__init__(game)
         self.font_titulo = pygame.font.SysFont(None, 110, bold=True)
         self.font_subtitulo = pygame.font.SysFont(None, 36)
@@ -42,10 +42,42 @@ class MenuState(BaseState):
         self.font_rodape = pygame.font.SysFont(None, 22)
 
         self.raposa_decoracao = criar_raposa_estatica(118, 118)
-        self.arvore = criar_arvore(64, 96)
+        self.arvore_silhueta = criar_arvore_silhueta(40, 60, (18, 10, 32))
+        self.arvore_meio = criar_arvore(58, 88)
+        self.arvore_frente = criar_arvore(82, 122)
 
+        # Gradiente entardecer: índigo → roxo → âmbar → dourado
         self.background = pygame.Surface((WIDTH, HEIGHT))
-        desenhar_gradiente_vertical(self.background, COR_VERDE_ESCURO, COR_VERDE_MEDIO)
+        desenhar_gradiente_multicolor(self.background, [
+            (0.00, (22, 12, 50)),
+            (0.30, (80, 28, 75)),
+            (0.62, (178, 68, 28)),
+            (1.00, (212, 138, 36)),
+        ])
+
+        # Estrelas cintilando no céu entardecer
+        self.estrelas = [
+            {
+                "x": random.randint(0, WIDTH),
+                "y": random.randint(0, int(HEIGHT * 0.48)),
+                "r": random.choice([1, 1, 1, 2]),
+                "fase": random.uniform(0, 6.28),
+            }
+            for _ in range(40)
+        ]
+
+        # Vagalumes perto da floresta
+        self.vagalumes = [
+            {
+                "x": random.uniform(120, WIDTH - 20),
+                "y": random.uniform(HEIGHT * 0.44, HEIGHT - GROUND_H - 8),
+                "vx": random.uniform(-15, 15),
+                "vy": random.uniform(-8, 8),
+                "fase": random.uniform(0, 6.28),
+                "r": random.choice([2, 2, 3]),
+            }
+            for _ in range(20)
+        ]
 
         self.tempo = 0.0
         self.timer_piscar = 0
@@ -54,11 +86,9 @@ class MenuState(BaseState):
         self.game.sound_manager.play_music("assets/sounds/menu.wav")
 
     def handle_events(self):
-        """Processa teclado: ENTER joga, I abre instruções, ESC sai."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.game.running = False
-
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     self.game.change_state(GameState(self.game))
@@ -68,33 +98,72 @@ class MenuState(BaseState):
                     self.game.running = False
 
     def update(self, dt):
-        """Anima a raposa quicando e o texto 'Pressione ENTER' piscando."""
         self.tempo += dt
         self.timer_piscar += dt
         if self.timer_piscar >= 0.6:
             self.mostrar_enter = not self.mostrar_enter
             self.timer_piscar = 0
 
+        for v in self.vagalumes:
+            v["x"] += v["vx"] * dt + math.sin(self.tempo * 0.8 + v["fase"]) * 0.9
+            v["y"] += v["vy"] * dt + math.cos(self.tempo * 0.6 + v["fase"]) * 0.5
+            if v["x"] < 80 or v["x"] > WIDTH - 10:
+                v["vx"] *= -1
+            if v["y"] < HEIGHT * 0.43 or v["y"] > HEIGHT - GROUND_H - 6:
+                v["vy"] *= -1
+
     def draw(self, screen):
-        """Desenha o fundo, o chão com árvores, o título e o painel de opções."""
         screen.blit(self.background, (0, 0))
 
-        # Faixa de grama com árvores no rodapé.
-        chao_y = HEIGHT - GROUND_H
-        pygame.draw.rect(screen, (38, 92, 46), (0, chao_y, WIDTH, GROUND_H))
-        for tx in range(16, WIDTH, 146):
-            screen.blit(self.arvore, (tx, chao_y - 66))
+        # Estrelas cintilando individualmente
+        for e in self.estrelas:
+            brilho = 0.5 + 0.5 * math.sin(self.tempo * 1.6 + e["fase"])
+            alpha = int(210 * brilho)
+            sv = pygame.Surface((e["r"] * 2 + 2, e["r"] * 2 + 2), pygame.SRCALPHA)
+            pygame.draw.circle(sv, (255, 245, 200, alpha), (e["r"] + 1, e["r"] + 1), e["r"])
+            screen.blit(sv, (int(e["x"]) - e["r"] - 1, int(e["y"]) - e["r"] - 1))
 
-        # Raposa quicando suavemente, em pé na grama.
+        # Silhueta de árvores ao fundo (menores, mais escuras)
+        chao_y = HEIGHT - GROUND_H
+        for tx in range(0, WIDTH, 76):
+            screen.blit(self.arvore_silhueta, (tx, chao_y - 44))
+
+        # Faixa de grama
+        pygame.draw.rect(screen, (22, 52, 24), (0, chao_y, WIDTH, GROUND_H))
+
+        # Árvores no plano médio
+        for tx in range(22, WIDTH, 128):
+            screen.blit(self.arvore_meio, (tx, chao_y - 66))
+
+        # Árvores no primeiro plano
+        for tx in range(200, WIDTH, 220):
+            screen.blit(self.arvore_frente, (tx, chao_y - 90))
+
+        # Vagalumes brilhando com halo suave
+        for v in self.vagalumes:
+            brilho_v = 0.35 + 0.65 * abs(math.sin(self.tempo * 3.5 + v["fase"]))
+            alpha_v = int(220 * brilho_v)
+            sv = pygame.Surface((v["r"] * 6, v["r"] * 6), pygame.SRCALPHA)
+            cx_v, cy_v = v["r"] * 3, v["r"] * 3
+            pygame.draw.circle(sv, (160, 255, 100, alpha_v // 5), (cx_v, cy_v), v["r"] * 3)
+            pygame.draw.circle(sv, (200, 255, 140, alpha_v // 2), (cx_v, cy_v), v["r"] * 2)
+            pygame.draw.circle(sv, (230, 255, 180, alpha_v), (cx_v, cy_v), v["r"])
+            screen.blit(sv, (int(v["x"]) - v["r"] * 3, int(v["y"]) - v["r"] * 3))
+
+        # Raposa quicando suavemente na grama
         bob = int(math.sin(self.tempo * 2.2) * 7)
         screen.blit(self.raposa_decoracao, (66, chao_y - 100 + bob))
 
-        desenhar_titulo_estilizado(
-            screen, "FOX CROSSING", self.font_titulo, WIDTH // 2, 86, COR_DOURADO
+        # Estrela decorativa pulsando no canto
+        raio_estrela = 18 + 4 * math.sin(self.tempo * 2.2)
+        desenhar_estrela(screen, WIDTH - 80, 54, raio_estrela, COR_DOURADO)
+
+        # Título com glow laranja/dourado
+        desenhar_titulo_glow(
+            screen, "FOX CROSSING", self.font_titulo,
+            WIDTH // 2, 86, COR_DOURADO, COR_LARANJA, passos=6,
         )
-        subtitulo = self.font_subtitulo.render(
-            "A travessia da raposa", True, COR_VERDE_CLARO
-        )
+        subtitulo = self.font_subtitulo.render("A travessia da raposa", True, COR_VERDE_CLARO)
         screen.blit(subtitulo, subtitulo.get_rect(center=(WIDTH // 2, 152)))
 
         painel_x = WIDTH // 2 - 210
@@ -102,8 +171,10 @@ class MenuState(BaseState):
         desenhar_painel(screen, painel_x, painel_y, 420, 196)
 
         if self.mostrar_enter:
+            pulse = 0.5 + 0.5 * math.sin(self.tempo * 2.8)
+            g_val = int(192 + 63 * pulse)
             enter = self.font_opcao.render(
-                "Pressione ENTER para jogar", True, COR_DOURADO
+                "Pressione ENTER para jogar", True, (255, g_val, 18)
             )
             screen.blit(enter, enter.get_rect(center=(WIDTH // 2, painel_y + 56)))
 
@@ -113,7 +184,5 @@ class MenuState(BaseState):
         pausa = self.font_rodape.render("P pausa durante o jogo", True, COR_TEXTO_SEC)
         screen.blit(pausa, pausa.get_rect(center=(WIDTH // 2, painel_y + 154)))
 
-        rodape = self.font_rodape.render(
-            "Insper 2026 — Design de Software", True, COR_TEXTO
-        )
+        rodape = self.font_rodape.render("Insper 2026 — Design de Software", True, COR_TEXTO)
         screen.blit(rodape, rodape.get_rect(center=(WIDTH // 2, HEIGHT - 20)))

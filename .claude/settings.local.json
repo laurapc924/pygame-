@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(dir c:\\\\Users\\\\andre\\\\pygame-\\\\assets\\\\img)",
-      "WebFetch(domain:opengameart.org)"
+      "WebFetch(domain:opengameart.org)",
+      "Bash(python -c \"import src.states.menu; import src.states.game_over_state; import src.states.victory_state; print\\('All imports OK'\\)\")"
     ]
   }
 }

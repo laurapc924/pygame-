@@ -669,3 +669,80 @@ def criar_lua(raio):
     pygame.draw.circle(surf, cratera, (centro - raio // 3, centro + raio // 4), raio // 6)
     pygame.draw.circle(surf, cratera, (centro + raio // 5, centro + raio // 2), raio // 8)
     return surf
+
+
+def desenhar_gradiente_multicolor(surface, stops):
+    """Gradiente vertical com múltiplos pontos de cor (color stops).
+
+    Args:
+        surface: pygame.Surface preenchida in-place.
+        stops: Lista de tuplas (t, (r, g, b)) ordenada por t crescente,
+               onde t=0.0 é o topo e t=1.0 é a base.
+    """
+    w = surface.get_width()
+    h = surface.get_height()
+    for y in range(h):
+        t = y / h
+        for i in range(len(stops) - 1):
+            t0, c0 = stops[i]
+            t1, c1 = stops[i + 1]
+            if t0 <= t <= t1:
+                frac = (t - t0) / (t1 - t0) if t1 > t0 else 0.0
+                cor = tuple(int(c0[j] + (c1[j] - c0[j]) * frac) for j in range(3))
+                pygame.draw.line(surface, cor, (0, y), (w, y))
+                break
+
+
+def criar_arvore_silhueta(width, height, cor=(15, 22, 18)):
+    """Cria uma árvore como silhueta sólida, para planos de fundo.
+
+    Args:
+        width: Largura da Surface.
+        height: Altura da Surface.
+        cor: Cor RGB da silhueta.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo a silhueta.
+    """
+    surface = pygame.Surface((width, height), pygame.SRCALPHA)
+    tronco_w = max(4, width // 5)
+    tronco_h = max(8, height // 4)
+    tronco_x = (width - tronco_w) // 2
+    tronco_y = height - tronco_h
+    pygame.draw.rect(surface, cor, (tronco_x, tronco_y, tronco_w, tronco_h))
+    copa_r = max(8, width // 3)
+    base_y = height - tronco_h
+    cx = width // 2
+    pygame.draw.circle(surface, cor, (cx, base_y - copa_r), copa_r)
+    pygame.draw.circle(surface, cor, (cx - copa_r // 2, base_y - 2 * copa_r), copa_r)
+    pygame.draw.circle(surface, cor, (cx + copa_r // 2, base_y - 2 * copa_r), copa_r)
+    return surface
+
+
+def desenhar_titulo_glow(surface, texto, font, x, y, cor_principal, cor_glow, passos=4):
+    """Texto centralizado com efeito de brilho (glow) suave ao redor.
+
+    Args:
+        surface: Surface destino.
+        texto: String a renderizar.
+        font: pygame.font.Font usada na renderização.
+        x: Coordenada X do centro do texto.
+        y: Coordenada Y do centro do texto.
+        cor_principal: Cor RGB do texto em destaque.
+        cor_glow: Cor RGB do halo de brilho.
+        passos: Intensidade do glow (4 = suave, 8 = intenso).
+    """
+    glow_surf = font.render(texto, True, cor_glow)
+    for raio in range(passos, 0, -1):
+        alpha = int(80 * (raio / passos) ** 1.8)
+        g = glow_surf.copy()
+        g.set_alpha(alpha)
+        for dx, dy in [
+            (-raio, 0), (raio, 0), (0, -raio), (0, raio),
+            (-raio, -raio), (raio, -raio), (-raio, raio), (raio, raio),
+        ]:
+            surface.blit(g, g.get_rect(center=(x + dx, y + dy)))
+    sombra = font.render(texto, True, (0, 0, 0))
+    surface.blit(sombra, sombra.get_rect(center=(x + 3, y + 3)))
+    principal = font.render(texto, True, cor_principal)
+    surface.blit(principal, principal.get_rect(center=(x, y)))
