@@ -1,5 +1,7 @@
 """Funções que criam sprites em pixel art usando pygame.draw."""
 
+import random
+
 import pygame
 
 
@@ -71,3 +73,99 @@ def criar_trevo(size=30):
     pygame.draw.rect(surf, (40, 120, 60), (caule_x, size - caule_h, caule_w, caule_h))
 
     return surf
+
+
+def criar_arvore(width, height):
+    """Cria a Surface de uma árvore (tronco marrom + copa verde).
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface com fundo transparente contendo a árvore.
+    """
+    surface = pygame.Surface((width, height), pygame.SRCALPHA)
+
+    # Tronco: retângulo marrom centralizado na base.
+    tronco_w = max(6, width // 4)
+    tronco_h = max(10, height // 3)
+    tronco_x = (width - tronco_w) // 2
+    tronco_y = height - tronco_h
+    pygame.draw.rect(surface, (101, 67, 33), (tronco_x, tronco_y, tronco_w, tronco_h))
+
+    # Copa: círculos verdes sobrepostos preenchendo a metade superior.
+    copa_r = max(8, width // 3)
+    centro_x = width // 2
+    base_y = height - tronco_h
+    pygame.draw.circle(surface, (34, 110, 34), (centro_x, base_y - copa_r), copa_r)
+    pygame.draw.circle(
+        surface, (40, 130, 40), (centro_x - copa_r // 2, base_y - 2 * copa_r), copa_r
+    )
+    pygame.draw.circle(
+        surface, (40, 130, 40), (centro_x + copa_r // 2, base_y - 2 * copa_r), copa_r
+    )
+
+    return surface
+
+
+def criar_grama_textura(width, height):
+    """Cria uma textura de grama: verde escuro com pontinhos e tufos claros.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface opaca com a textura de grama.
+    """
+    surface = pygame.Surface((width, height))
+    surface.fill((30, 80, 30))
+
+    # Pontinhos verde claro espalhados aleatoriamente.
+    num_pontos = (width * height) // 30
+    for _ in range(num_pontos):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        surface.set_at((x, y), (50, 130, 50))
+
+    # Tufos de grama: linhas verticais curtas verde claro.
+    num_tufos = (width * height) // 1500
+    for _ in range(num_tufos):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 5)
+        altura_tufo = random.randint(3, 4)
+        pygame.draw.line(surface, (60, 150, 60), (x, y), (x, y + altura_tufo))
+
+    return surface
+
+
+def criar_asfalto_textura(width, height):
+    """Cria uma textura de asfalto: cinza com manchas escuras e pixels claros.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface opaca com a textura de asfalto.
+    """
+    surface = pygame.Surface((width, height))
+    surface.fill((80, 80, 85))
+
+    # Manchas mais escuras pra dar textura ao asfalto.
+    num_manchas = (width * height) // 400
+    for _ in range(num_manchas):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        raio = random.randint(2, 5)
+        pygame.draw.circle(surface, (60, 60, 65), (x, y), raio)
+
+    # Pixels mais claros: aspecto de asfalto desgastado.
+    num_claros = (width * height) // 50
+    for _ in range(num_claros):
+        x = random.randint(0, width - 1)
+        y = random.randint(0, height - 1)
+        surface.set_at((x, y), (100, 100, 105))
+
+    return surface

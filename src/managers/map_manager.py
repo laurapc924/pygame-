@@ -5,7 +5,12 @@ import random
 
 from src.entities.obstacle import Obstacle
 from src.entities.powerup import PowerUp
-from src.settings import GRAY_ROAD, GREEN_FOREST, HEIGHT, IMG_DIR, WHITE, WIDTH
+from src.settings import HEIGHT, IMG_DIR, WHITE, WIDTH
+from src.utils.sprite_factory import (
+    criar_arvore,
+    criar_asfalto_textura,
+    criar_grama_textura,
+)
 
 
 SIDE_STRIP_WIDTH = 120
@@ -16,6 +21,9 @@ LANE_WIDTH = ROAD_AREA_WIDTH // NUM_LANES
 DASH_LENGTH = 20
 DASH_GAP = 15
 DASH_THICKNESS = 3
+
+TREE_W = 50
+TREE_H = 80
 
 CAR_FILES = [
     "car_red_1.png",
@@ -46,6 +54,50 @@ class MapManager:
         ]
         self.goal_zone = pygame.Rect(WIDTH - 80, 0, 60, HEIGHT)
         self.car_images = self._load_car_images()
+
+        # Texturas de fundo geradas UMA vez (otimização: nunca no draw).
+        self.textura_grama_esquerda = criar_grama_textura(SIDE_STRIP_WIDTH, HEIGHT)
+        self.textura_grama_direita = criar_grama_textura(
+            WIDTH - (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH), HEIGHT
+        )
+        self.textura_asfalto = criar_asfalto_textura(LANE_WIDTH, HEIGHT)
+
+        # Árvores fixas em slots verticais exclusivos (nunca se sobrepõem).
+        self.arvores = self._posicionar_arvores()
+
+    def _posicionar_arvores(self):
+        """Posiciona as árvores das faixas verdes em slots fixos, sem sobreposição.
+
+        Cada árvore ocupa uma coluna e uma fatia vertical exclusivas, então
+        duas árvores nunca se sobrepõem — só há jitter aleatório dentro do slot.
+
+        Returns:
+            Lista de tuplas (Surface, x, y) prontas para desenhar.
+        """
+        arvores = []
+
+        # Faixa esquerda: 8 árvores em 2 colunas x 4 linhas.
+        colunas_esq = [0, SIDE_STRIP_WIDTH // 2]
+        linhas_esq = 4
+        slot_h_esq = HEIGHT // linhas_esq
+        jitter_x_esq = max(0, SIDE_STRIP_WIDTH // 2 - TREE_W)
+        for indice in range(8):
+            x_base = colunas_esq[indice % 2]
+            linha = indice // 2
+            x = x_base + random.randint(0, jitter_x_esq)
+            y = linha * slot_h_esq + random.randint(0, max(0, slot_h_esq - TREE_H))
+            arvores.append((criar_arvore(TREE_W, TREE_H), x, y))
+
+        # Faixa direita: 6 árvores empilhadas em 1 coluna x 6 linhas.
+        # Faixa estreita; ficam no início da faixa, sem cobrir a goal_zone.
+        direita_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
+        linhas_dir = 6
+        slot_h_dir = HEIGHT // linhas_dir
+        for linha in range(linhas_dir):
+            y = linha * slot_h_dir + random.randint(0, max(0, slot_h_dir - TREE_H))
+            arvores.append((criar_arvore(TREE_W, TREE_H), direita_x, y))
+
+        return arvores
 
     def _load_car_images(self):
         cars_dir = IMG_DIR / "cars"
@@ -91,12 +143,19 @@ class MapManager:
         self.powerups.draw(screen)
 
     def draw(self, screen):
-        """Desenha as faixas laterais, as faixas de rua, as linhas tracejadas e a zona de chegada."""
-        screen.fill(GREEN_FOREST)
-        pygame.draw.rect(screen, GREEN_FOREST, self.left_strip)
-        pygame.draw.rect(screen, GREEN_FOREST, self.right_strip)
+        """Desenha texturas de fundo, faixas de rua, árvores, tracejado e zona de chegada."""
+        # Texturas de grama nas faixas verdes laterais.
+        screen.blit(self.textura_grama_esquerda, (0, 0))
+        screen.blit(
+            self.textura_grama_direita,
+            (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH, 0),
+        )
+        # Textura de asfalto em cada faixa de rua (self.lanes guarda Rects).
         for lane in self.lanes:
-            pygame.draw.rect(screen, GRAY_ROAD, lane)
+            screen.blit(self.textura_asfalto, (lane.x, 0))
+        # Árvores fixas, desenhadas sobre a grama e antes do tracejado.
+        for arvore_img, x, y in self.arvores:
+            screen.blit(arvore_img, (x, y))
         for i in range(1, NUM_LANES):
             x = SIDE_STRIP_WIDTH + i * LANE_WIDTH
             self._draw_dashed_line(screen, x)
