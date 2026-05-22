@@ -2,23 +2,50 @@
 
 import pygame
 
-from src.settings import HEIGHT, WIDTH
+from src.settings import (
+    COR_DOURADO,
+    COR_TEXTO,
+    COR_TEXTO_SEC,
+    COR_VERDE_CLARO,
+    COR_VERDE_ESCURO,
+    COR_VERDE_MEDIO,
+    HEIGHT,
+    WIDTH,
+)
 from src.states.base_state import BaseState
+from src.utils.sprite_factory import (
+    criar_cogumelo,
+    criar_trevo,
+    desenhar_gradiente_vertical,
+    desenhar_painel,
+    desenhar_titulo_estilizado,
+)
+
+
+# Dimensões padrão de um painel de seção e do painel de rodapé.
+PAINEL_W = 460
+PAINEL_H = 200
 
 
 class InstructionsState(BaseState):
-    """Exibe o tutorial do jogo com objetivo, controles, power-ups e habilidade especial."""
+    """Exibe o tutorial: objetivo, controles, itens especiais e habilidade."""
 
     def __init__(self, game):
-        """Inicializa a tela de instruções e suas fontes."""
+        """Inicializa fontes, background com gradiente e ícones decorativos."""
         super().__init__(game)
-        self.font_titulo = pygame.font.SysFont(None, 70)
-        self.font_secao = pygame.font.SysFont(None, 40)
-        self.font_texto = pygame.font.SysFont(None, 28)
-        self.font_rodape = pygame.font.SysFont(None, 24)
+        self.font_titulo = pygame.font.SysFont(None, 64)
+        self.font_secao = pygame.font.SysFont(None, 34)
+        self.font_texto = pygame.font.SysFont(None, 26)
+        self.font_rodape = pygame.font.SysFont(None, 22)
+
+        self.background = pygame.Surface((WIDTH, HEIGHT))
+        desenhar_gradiente_vertical(self.background, COR_VERDE_ESCURO, COR_VERDE_MEDIO)
+
+        self.icone_cogumelo = criar_cogumelo(30)
+        self.icone_trevo = criar_trevo(30)
 
     def handle_events(self):
-        """Processa eventos da tela de instruções e permite voltar ao menu."""
+        """Processa eventos: M ou ESC voltam ao menu."""
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 self.game.running = False
@@ -29,59 +56,106 @@ class InstructionsState(BaseState):
                     self.game.change_state(MenuState(self.game))
 
     def update(self, dt):
-        """Mantém a tela estática, sem lógica de atualização."""
+        """Tela estática: nada a atualizar."""
         pass
 
-    def _draw_text(self, screen, text, font, color, y):
-        """Renderiza texto centralizado horizontalmente na posição vertical indicada."""
-        surface = font.render(text, True, color)
-        rect = surface.get_rect(center=(WIDTH // 2, y))
-        screen.blit(surface, rect)
+    def _desenhar_secao(self, screen, px, py, titulo, linhas):
+        """Desenha um painel com título de seção e linhas de texto centralizadas.
+
+        Args:
+            screen: Surface destino.
+            px: X do canto superior esquerdo do painel.
+            py: Y do canto superior esquerdo do painel.
+            titulo: Texto do título da seção.
+            linhas: Lista de strings exibidas abaixo do título.
+        """
+        desenhar_painel(screen, px, py, PAINEL_W, PAINEL_H)
+        centro_x = px + PAINEL_W // 2
+        titulo_surf = self.font_secao.render(titulo, True, COR_VERDE_CLARO)
+        screen.blit(titulo_surf, titulo_surf.get_rect(center=(centro_x, py + 34)))
+        for i, linha in enumerate(linhas):
+            linha_surf = self.font_texto.render(linha, True, COR_TEXTO)
+            screen.blit(
+                linha_surf, linha_surf.get_rect(center=(centro_x, py + 86 + i * 38))
+            )
+
+    def _desenhar_itens(self, screen, px, py):
+        """Desenha o painel 'ITENS ESPECIAIS' com os ícones de cogumelo e trevo.
+
+        Args:
+            screen: Surface destino.
+            px: X do canto superior esquerdo do painel.
+            py: Y do canto superior esquerdo do painel.
+        """
+        desenhar_painel(screen, px, py, PAINEL_W, PAINEL_H)
+        titulo_surf = self.font_secao.render("ITENS ESPECIAIS", True, COR_VERDE_CLARO)
+        screen.blit(
+            titulo_surf, titulo_surf.get_rect(center=(px + PAINEL_W // 2, py + 34))
+        )
+        itens = [
+            (self.icone_cogumelo, "Cogumelo: +1 vida"),
+            (self.icone_trevo, "Trevo: invencível por 3 segundos"),
+        ]
+        for i, (icone, texto) in enumerate(itens):
+            linha_y = py + 78 + i * 50
+            screen.blit(icone, (px + 36, linha_y))
+            texto_surf = self.font_texto.render(texto, True, COR_TEXTO)
+            screen.blit(texto_surf, (px + 82, linha_y + 4))
 
     def draw(self, screen):
-        """Desenha todas as seções de instruções na tela."""
-        screen.fill((20, 60, 30))
+        """Desenha o background, o título e os painéis com as instruções."""
+        screen.blit(self.background, (0, 0))
 
-        dourado = (255, 215, 0)
-        branco = (255, 255, 255)
-        cinza_claro = (200, 200, 200)
-        cinza_rodape = (180, 180, 180)
-
-        self._draw_text(screen, "COMO JOGAR", self.font_titulo, dourado, 45)
-
-        self._draw_text(screen, "OBJETIVO", self.font_secao, branco, 112)
-        self._draw_text(screen, "Ajude a raposa a atravessar a cidade", self.font_texto, cinza_claro, 147)
-        self._draw_text(screen, "e chegar na zona dourada (a toca)", self.font_texto, cinza_claro, 174)
-
-        self._draw_text(screen, "CONTROLES", self.font_secao, branco, 222)
-        self._draw_text(screen, "Setas do teclado: mover a raposa", self.font_texto, cinza_claro, 257)
-        self._draw_text(screen, "SHIFT: ativar habilidade Instinto", self.font_texto, cinza_claro, 284)
-        self._draw_text(screen, "P: pausar o jogo", self.font_texto, cinza_claro, 311)
-
-        self._draw_text(screen, "ITENS ESPECIAIS", self.font_secao, branco, 359)
-        self._draw_text(screen, "Cogumelo vermelho: +1 vida", self.font_texto, cinza_claro, 394)
-        self._draw_text(
-            screen,
-            "Trevo verde: invencibilidade por 3 segundos",
-            self.font_texto,
-            cinza_claro,
-            421,
+        desenhar_titulo_estilizado(
+            screen, "COMO JOGAR", self.font_titulo, WIDTH // 2, 44, COR_DOURADO
         )
 
-        self._draw_text(screen, "HABILIDADE: INSTINTO", self.font_secao, branco, 452)
-        self._draw_text(
-            screen,
-            "Aperte SHIFT para reduzir a velocidade dos carros",
-            self.font_texto,
-            cinza_claro,
-            486,
-        )
-        self._draw_text(screen, "Dura 2s, recarrega em 10s", self.font_texto, cinza_claro, 513)
+        x_esq = 42
+        x_dir = WIDTH - 42 - PAINEL_W
+        y_cima = 78
+        y_baixo = 292
 
-        self._draw_text(
+        self._desenhar_secao(
             screen,
-            "Pressione M ou ESC para voltar ao menu",
-            self.font_rodape,
-            cinza_rodape,
-            HEIGHT - 18,
+            x_esq,
+            y_cima,
+            "OBJETIVO",
+            [
+                "Ajude a raposa a atravessar a cidade",
+                "e chegar na zona dourada (a toca).",
+            ],
+        )
+        self._desenhar_secao(
+            screen,
+            x_dir,
+            y_cima,
+            "CONTROLES",
+            [
+                "Setas do teclado: mover a raposa",
+                "SHIFT: ativar habilidade Instinto",
+                "P: pausar o jogo",
+            ],
+        )
+        self._desenhar_itens(screen, x_esq, y_baixo)
+        self._desenhar_secao(
+            screen,
+            x_dir,
+            y_baixo,
+            "HABILIDADE: INSTINTO",
+            [
+                "SHIFT reduz a velocidade dos carros.",
+                "Dura 2s e recarrega em 10s.",
+            ],
+        )
+
+        rodape_w, rodape_h = 460, 48
+        rodape_x = WIDTH // 2 - rodape_w // 2
+        rodape_y = HEIGHT - 60
+        desenhar_painel(screen, rodape_x, rodape_y, rodape_w, rodape_h)
+        rodape_surf = self.font_rodape.render(
+            "Pressione M ou ESC para voltar ao menu", True, COR_TEXTO_SEC
+        )
+        screen.blit(
+            rodape_surf,
+            rodape_surf.get_rect(center=(WIDTH // 2, rodape_y + rodape_h // 2)),
         )

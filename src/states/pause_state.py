@@ -2,8 +2,9 @@
 
 import pygame
 
-from src.settings import HEIGHT, WIDTH
+from src.settings import COR_DOURADO, COR_TEXTO, COR_TEXTO_SEC, COR_VERDE_CLARO, HEIGHT, WIDTH
 from src.states.base_state import BaseState
+from src.utils.sprite_factory import desenhar_painel, desenhar_titulo_estilizado
 
 
 class PauseState(BaseState):
@@ -13,8 +14,9 @@ class PauseState(BaseState):
         """Inicializa a pausa guardando referência ao GameState interrompido."""
         super().__init__(game)
         self.game_state = game_state
-        self.font_titulo = pygame.font.SysFont(None, 100)
-        self.font_opcoes = pygame.font.SysFont(None, 36)
+        self.font_titulo = pygame.font.SysFont(None, 80)
+        self.font_subtitulo = pygame.font.SysFont(None, 26)
+        self.font_opcoes = pygame.font.SysFont(None, 32)
 
     def handle_events(self):
         """Processa comandos da tela de pausa sem atualizar o GameState pausado."""
@@ -36,25 +38,32 @@ class PauseState(BaseState):
         pass
 
     def draw(self, screen):
-        """Desenha o jogo congelado ao fundo e aplica o overlay com opções de pausa."""
+        """Desenha o jogo congelado ao fundo e aplica o painel de pausa."""
         self.game_state.draw(screen)
 
         overlay = pygame.Surface((WIDTH, HEIGHT), pygame.SRCALPHA)
-        overlay.fill((0, 0, 0, 160))
+        overlay.fill((0, 0, 0, 170))
         screen.blit(overlay, (0, 0))
 
-        titulo = self.font_titulo.render("PAUSADO", True, (255, 255, 255))
-        titulo_rect = titulo.get_rect(center=(WIDTH // 2, HEIGHT // 2 - 80))
-        screen.blit(titulo, titulo_rect)
+        painel_w, painel_h = 440, 300
+        painel_x = WIDTH // 2 - painel_w // 2
+        painel_y = HEIGHT // 2 - painel_h // 2
+        desenhar_painel(screen, painel_x, painel_y, painel_w, painel_h)
 
-        continuar = self.font_opcoes.render("P - Continuar", True, (255, 255, 255))
-        continuar_rect = continuar.get_rect(center=(WIDTH // 2, HEIGHT // 2))
-        screen.blit(continuar, continuar_rect)
+        desenhar_titulo_estilizado(
+            screen, "PAUSADO", self.font_titulo, WIDTH // 2, painel_y + 52, COR_DOURADO
+        )
+        subtitulo = self.font_subtitulo.render("Tempo congelado", True, COR_VERDE_CLARO)
+        screen.blit(subtitulo, subtitulo.get_rect(center=(WIDTH // 2, painel_y + 95)))
 
-        menu = self.font_opcoes.render("M - Menu Principal", True, (255, 255, 255))
-        menu_rect = menu.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 50))
-        screen.blit(menu, menu_rect)
-
-        sair = self.font_opcoes.render("ESC - Sair", True, (180, 180, 180))
-        sair_rect = sair.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 100))
-        screen.blit(sair, sair_rect)
+        opcoes = [
+            ("P - Continuar", COR_TEXTO),
+            ("M - Menu Principal", COR_TEXTO),
+            ("ESC - Sair", COR_TEXTO_SEC),
+        ]
+        for i, (texto, cor) in enumerate(opcoes):
+            opcao_surf = self.font_opcoes.render(texto, True, cor)
+            screen.blit(
+                opcao_surf,
+                opcao_surf.get_rect(center=(WIDTH // 2, painel_y + 150 + i * 45)),
+            )
