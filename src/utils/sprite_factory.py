@@ -719,6 +719,114 @@ def criar_arvore_silhueta(width, height, cor=(15, 22, 18)):
     return surface
 
 
+def criar_cacto(width, height):
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    verde = (60, 140, 60)
+    verde_escuro = (40, 100, 40)
+    cx = width // 2
+
+    # Tronco principal
+    tronco_w = max(6, width // 6)
+    pygame.draw.rect(surf, verde, (cx - tronco_w // 2, height // 4, tronco_w, height * 3 // 4))
+
+    # Braço esquerdo
+    braco_w = max(5, width // 7)
+    pygame.draw.rect(surf, verde, (cx - tronco_w // 2 - braco_w, height // 2, braco_w, height // 6))
+    pygame.draw.rect(surf, verde, (cx - tronco_w // 2 - braco_w, height * 3 // 8, braco_w, height // 8 + braco_w))
+
+    # Braço direito
+    pygame.draw.rect(surf, verde, (cx + tronco_w // 2, height * 5 // 8, braco_w, height // 6))
+    pygame.draw.rect(surf, verde, (cx + tronco_w // 2, height * 4 // 8, braco_w, height // 8 + braco_w))
+
+    # Espinhos
+    espinho_cor = (200, 200, 180)
+    for sy in range(height // 4, height, height // 6):
+        pygame.draw.line(surf, espinho_cor, (cx - tronco_w // 2 - 3, sy), (cx - tronco_w // 2, sy - 3), 1)
+        pygame.draw.line(surf, espinho_cor, (cx + tronco_w // 2 + 3, sy), (cx + tronco_w // 2, sy - 3), 1)
+
+    # Contorno
+    pygame.draw.rect(surf, verde_escuro, (cx - tronco_w // 2, height // 4, tronco_w, height * 3 // 4), 1)
+    return surf
+
+
+def criar_ameia(width, height):
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    pedra = (130, 120, 110)
+    pedra_escura = (90, 82, 74)
+    pedra_clara = (160, 150, 138)
+
+    # Parede base
+    parede_y = height // 3
+    pygame.draw.rect(surf, pedra, (0, parede_y, width, height - parede_y))
+
+    # Merlões (ameias) no topo
+    merlon_w = width // 3
+    merlon_h = height // 4
+    for i in range(2):
+        mx = i * merlon_w * 2
+        pygame.draw.rect(surf, pedra, (mx, parede_y - merlon_h, merlon_w, merlon_h))
+        pygame.draw.rect(surf, pedra_escura, (mx, parede_y - merlon_h, merlon_w, merlon_h), 1)
+
+    # Textura de blocos de pedra
+    for by in range(parede_y, height, height // 5):
+        pygame.draw.line(surf, pedra_escura, (0, by), (width, by), 1)
+    pygame.draw.line(surf, pedra_escura, (width // 2, parede_y), (width // 2, height), 1)
+
+    # Brilho sutil
+    pygame.draw.line(surf, pedra_clara, (2, parede_y), (2, height - 2), 1)
+    return surf
+
+
+def criar_junco(width, height):
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    verde = (60, 130, 70)
+    marrom = (100, 65, 30)
+    cx = width // 2
+
+    # Haste do junco
+    haste_w = max(3, width // 10)
+    pygame.draw.rect(surf, verde, (cx - haste_w // 2, height // 5, haste_w, height * 4 // 5))
+
+    # Espiga oval marrom no topo
+    espiga_w = max(8, width // 4)
+    espiga_h = height // 3
+    pygame.draw.ellipse(surf, marrom, (cx - espiga_w // 2, height // 6 - espiga_h // 2, espiga_w, espiga_h))
+
+    # Folhas laterais
+    folha_cor = (50, 115, 60)
+    pygame.draw.polygon(surf, folha_cor, [
+        (cx, height // 2),
+        (cx - width // 3, height * 3 // 8),
+        (cx - width // 4, height * 5 // 8),
+    ])
+    pygame.draw.polygon(surf, folha_cor, [
+        (cx, height * 5 // 8),
+        (cx + width // 3, height // 2),
+        (cx + width // 4, height * 3 // 4),
+    ])
+    return surf
+
+
+def criar_arvore_floresta(width, height):
+    surf = pygame.Surface((width, height), pygame.SRCALPHA)
+    tronco_w = max(6, width // 5)
+    tronco_h = max(10, height // 4)
+    cx = width // 2
+
+    # Tronco
+    pygame.draw.rect(surf, (70, 45, 20), (cx - tronco_w // 2, height - tronco_h, tronco_w, tronco_h))
+
+    # Copa densa com 5 círculos sobrepostos (floresta escura e densa)
+    base_y = height - tronco_h
+    r = max(10, width // 2)
+    cores = [(20, 80, 25), (25, 95, 30), (30, 110, 35), (22, 88, 28), (18, 72, 22)]
+    offsets = [(0, 0), (-r // 2, r // 3), (r // 2, r // 3), (-r // 4, -r // 3), (r // 4, -r // 4)]
+    for cor, (ox, oy) in zip(cores, offsets):
+        pygame.draw.circle(surf, cor, (cx + ox, base_y - r + oy), r)
+
+    return surf
+
+
 def desenhar_titulo_glow(surface, texto, font, x, y, cor_principal, cor_glow, passos=4):
     """Texto centralizado com efeito de brilho (glow) suave ao redor.
 

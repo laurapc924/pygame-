@@ -4,7 +4,7 @@
 class LevelManager:
     """Guarda as configs de cada fase (dificuldade, tema, cores) e a fase ativa."""
 
-    TOTAL_LEVELS = 6
+    TOTAL_LEVELS = 9
 
     def __init__(self):
         """Inicializa na fase 1 com as configs temáticas de todas as 6 fases."""
@@ -79,14 +79,53 @@ class LevelManager:
                 "name": "FAZENDA",
                 "subtitle": "A reta final",
                 "decoration": "cerca",
-                "car_speed_min": 230,
-                "car_speed_max": 390,
-                "cars_per_lane": 4,
+                "car_speed_min": 200,
+                "car_speed_max": 350,
+                "cars_per_lane": 3,
                 "points": 1000,
                 "bg_color_top": (140, 190, 228),
                 "bg_color_bottom": (192, 216, 236),
                 "asphalt_color": (120, 95, 62),
                 "grass_color": (108, 150, 58),
+            },
+            7: {
+                "name": "DESERTO",
+                "subtitle": "Calor e poeira",
+                "decoration": "cacto",
+                "car_speed_min": 220,
+                "car_speed_max": 370,
+                "cars_per_lane": 3,
+                "points": 1200,
+                "bg_color_top": (215, 165, 70),
+                "bg_color_bottom": (230, 195, 110),
+                "asphalt_color": (185, 160, 105),
+                "grass_color": (195, 170, 100),
+            },
+            8: {
+                "name": "RIO",
+                "subtitle": "Correnteza perigosa",
+                "decoration": "junco",
+                "car_speed_min": 230,
+                "car_speed_max": 375,
+                "cars_per_lane": 3,
+                "points": 1800,
+                "bg_color_top": (95, 170, 215),
+                "bg_color_bottom": (55, 135, 195),
+                "asphalt_color": (55, 125, 195),
+                "grass_color": (65, 155, 85),
+            },
+            9: {
+                "name": "FLORESTA",
+                "subtitle": "A mata fechada",
+                "decoration": "arvore_floresta",
+                "car_speed_min": 245,
+                "car_speed_max": 395,
+                "cars_per_lane": 3,
+                "points": 2200,
+                "bg_color_top": (18, 55, 18),
+                "bg_color_bottom": (28, 75, 28),
+                "asphalt_color": (58, 48, 28),
+                "grass_color": (28, 85, 38),
             },
         }
 

@@ -7,13 +7,17 @@ from src.entities.obstacle import Obstacle
 from src.entities.powerup import PowerUp
 from src.settings import HEIGHT, IMG_DIR, WHITE, WIDTH
 from src.utils.sprite_factory import (
+    criar_ameia,
     criar_arvore,
+    criar_arvore_floresta,
     criar_asfalto_textura,
     criar_asfalto_textura_colorida,
+    criar_cacto,
     criar_cerca,
     criar_coqueiro,
     criar_grama_textura,
     criar_grama_textura_colorida,
+    criar_junco,
     criar_pedra,
     criar_pinheiro,
     criar_poste,
@@ -41,6 +45,10 @@ DECORACOES = {
     "pinheiro": criar_pinheiro,
     "pedra": criar_pedra,
     "cerca": criar_cerca,
+    "cacto": criar_cacto,
+    "ameia": criar_ameia,
+    "junco": criar_junco,
+    "arvore_floresta": criar_arvore_floresta,
 }
 
 CAR_FILES = [
