@@ -7,18 +7,16 @@ from src.settings import (
     COR_TEXTO,
     COR_TEXTO_SEC,
     COR_VERDE_CLARO,
-    COR_VERDE_ESCURO,
-    COR_VERDE_MEDIO,
     HEIGHT,
     WIDTH,
 )
 from src.states.base_state import BaseState
 from src.utils.fonts import get_font
 from src.utils.sprite_factory import (
+    criar_background_floresta_dia,
     criar_cogumelo,
     criar_raposa_estatica,
     criar_trevo,
-    desenhar_gradiente_vertical,
     desenhar_painel,
     desenhar_titulo_estilizado,
 )
@@ -41,8 +39,7 @@ class InstructionsState(BaseState):
         self.font_tecla = get_font(18, bold=True)
         self.font_rodape = get_font(19)
 
-        self.background = pygame.Surface((WIDTH, HEIGHT))
-        desenhar_gradiente_vertical(self.background, COR_VERDE_ESCURO, COR_VERDE_MEDIO)
+        self.background = criar_background_floresta_dia(WIDTH, HEIGHT)
 
         self.icone_cogumelo = criar_cogumelo(30)
         self.icone_trevo = criar_trevo(30)

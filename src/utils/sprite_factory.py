@@ -746,3 +746,339 @@ def desenhar_titulo_glow(surface, texto, font, x, y, cor_principal, cor_glow, pa
     surface.blit(sombra, sombra.get_rect(center=(x + 3, y + 3)))
     principal = font.render(texto, True, cor_principal)
     surface.blit(principal, principal.get_rect(center=(x, y)))
+
+
+def criar_background_menu_cidade(width, height):
+    """Cria o background pixel-art do menu: cidade de dia com céu, prédios, rua e árvores.
+
+    Reproduz a cena de assets/img/menu_bg.svg usando pygame.draw, escalada
+    proporcionalmente do design original 1280x720 para o tamanho pedido.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface opaca contendo o cenário do menu.
+    """
+    surf = pygame.Surface((width, height))
+    sx = width / 1280.0
+    sy = height / 720.0
+
+    def R(x, y, w, h):
+        """Retorna um pygame.Rect escalado das coordenadas de design (1280x720)."""
+        return pygame.Rect(int(x * sx), int(y * sy), max(1, int(w * sx)), max(1, int(h * sy)))
+
+    def rect_alpha(cor, alpha, x, y, w, h):
+        """Desenha um retângulo semi-transparente no destino."""
+        r = R(x, y, w, h)
+        s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
+        s.fill((*cor, alpha))
+        surf.blit(s, r.topleft)
+
+    # Céu: gradiente azul de 3 paradas (topo claro -> turquesa -> mais claro).
+    azul_topo = (74, 184, 240)
+    azul_meio = (125, 212, 248)
+    azul_baixo = (168, 230, 255)
+    for j in range(height):
+        f = j / max(1, height - 1)
+        if f < 0.6:
+            t = f / 0.6
+            cor = tuple(int(azul_topo[k] + (azul_meio[k] - azul_topo[k]) * t) for k in range(3))
+        else:
+            t = (f - 0.6) / 0.4
+            cor = tuple(int(azul_meio[k] + (azul_baixo[k] - azul_meio[k]) * t) for k in range(3))
+        pygame.draw.line(surf, cor, (0, j), (width, j))
+
+    # Sol no canto superior direito.
+    pygame.draw.rect(surf, (255, 224, 51), R(1060, 55, 56, 56))
+    rect_alpha((255, 241, 118), 128, 1070, 63, 36, 20)
+    for rx, ry, rw, rh in [(1084, 38, 8, 14), (1084, 114, 8, 14), (1040, 78, 14, 8), (1118, 78, 14, 8)]:
+        rect_alpha((255, 224, 51), 180, rx, ry, rw, rh)
+    for rx, ry in [(1046, 47), (1116, 47), (1046, 110), (1116, 110)]:
+        rect_alpha((255, 224, 51), 128, rx, ry, 10, 10)
+
+    # Nuvens pixel-art (clusters de retângulos brancos translúcidos).
+    nuvens = [
+        [(80, 60, 100, 30), (60, 72, 140, 28), (90, 50, 60, 24)],
+        [(400, 40, 80, 26), (385, 50, 110, 24)],
+        [(800, 55, 120, 30), (780, 65, 160, 26), (820, 46, 70, 22)],
+        [(1100, 45, 90, 26), (1085, 55, 120, 24)],
+    ]
+    for cluster in nuvens:
+        for cx, cy, cw, ch in cluster:
+            rect_alpha((255, 255, 255), 225, cx, cy, cw, ch)
+
+    # Prédios da cidade no horizonte (esquerda e direita).
+    janela_cor = (126, 207, 245)
+    predios = [
+        ((176, 190, 197), 0, 240, 80, 260),
+        ((141, 158, 170), 70, 160, 60, 340),
+        ((160, 176, 188), 120, 300, 70, 200),
+        ((154, 172, 184), 1060, 200, 90, 300),
+        ((176, 190, 197), 1150, 180, 110, 320),
+    ]
+    for cor, px, py, pw, ph in predios:
+        pygame.draw.rect(surf, cor, R(px, py, pw, ph))
+    # Antena do prédio alto.
+    pygame.draw.rect(surf, (96, 125, 139), R(97, 150, 4, 14))
+    pygame.draw.rect(surf, (96, 125, 139), R(93, 154, 12, 2))
+    # Janelas (grades regulares em cada prédio).
+    janelas = [
+        (10, 260, 320, [10, 30], 12, 8, 20),
+        (78, 175, 250, [0, 18, 36], 10, 8, 20),
+        (130, 315, 350, [0, 22], 14, 10, 20),
+        (1070, 215, 270, [0, 20, 42], 12, 9, 20),
+        (1160, 195, 250, [0, 22, 44], 14, 10, 21),
+    ]
+    for bx, y_ini, y_fim, colunas, jw, jh, passo in janelas:
+        for y in range(y_ini, y_fim, passo):
+            for col in colunas:
+                rect_alpha(janela_cor, 200, bx + col, y, jw, jh)
+
+    # Grama (faixa verde com um destaque mais claro em cima).
+    pygame.draw.rect(surf, (58, 138, 34), R(0, 500, 1280, 30))
+    pygame.draw.rect(surf, (74, 170, 42), R(0, 500, 1280, 12))
+
+    # Rua em 3 faixas com tons de cinza.
+    pygame.draw.rect(surf, (85, 85, 102), R(0, 530, 1280, 60))
+    pygame.draw.rect(surf, (74, 74, 90), R(0, 590, 1280, 50))
+    pygame.draw.rect(surf, (85, 85, 102), R(0, 640, 1280, 80))
+    # Faixas brancas tracejadas + linha amarela central tracejada.
+    for x in range(0, 1280, 80):
+        rect_alpha((255, 255, 255), 180, x, 557, 60, 6)
+    for x in range(20, 1280, 80):
+        rect_alpha((245, 200, 66), 150, x, 610, 50, 5)
+
+    # Árvores pixel-art em 3 camadas de tom de verde (mais escura embaixo).
+    arvores_pos = [(210, 460, 56), (310, 468, 50), (410, 455, 62), (810, 462, 56), (920, 465, 50), (1020, 458, 62)]
+    for tx, ty_trunk, copa in arvores_pos:
+        tronco_w = max(14, copa // 4)
+        pygame.draw.rect(surf, (107, 68, 35), R(tx, ty_trunk, tronco_w, copa - 6))
+        cx = tx + tronco_w // 2
+        for w_copa, cor, dy in [(copa, (45, 138, 14), -copa + 6), ((copa * 5) // 7, (53, 160, 16), -copa - 2), ((copa * 3) // 7, (61, 184, 18), -copa - 10)]:
+            pygame.draw.rect(surf, cor, R(cx - w_copa // 2, ty_trunk + dy, w_copa, w_copa))
+
+    # Raposa pixel-art na grama, à esquerda (igual à da referência).
+    fx, fy = 50, 440
+    fox_laranja = (224, 90, 10)
+    fox_laranja_claro = (240, 144, 80)
+    fox_orelha_int = (240, 120, 48)
+    fox_perna = (192, 72, 0)
+    fox_preto = (26, 26, 26)
+    # Corpo, cabeça, orelhas externas.
+    pygame.draw.rect(surf, fox_laranja, R(fx + 10, fy + 24, 50, 30))
+    pygame.draw.rect(surf, fox_laranja, R(fx + 40, fy + 8, 30, 26))
+    pygame.draw.rect(surf, fox_laranja, R(fx + 44, fy, 10, 12))
+    pygame.draw.rect(surf, fox_laranja, R(fx + 62, fy, 10, 12))
+    # Interior das orelhas.
+    pygame.draw.rect(surf, fox_orelha_int, R(fx + 46, fy + 2, 6, 8))
+    pygame.draw.rect(surf, fox_orelha_int, R(fx + 64, fy + 2, 6, 8))
+    # Focinho/face mais claro.
+    pygame.draw.rect(surf, fox_laranja_claro, R(fx + 44, fy + 16, 20, 16))
+    # Olho com pontinho branco e nariz.
+    pygame.draw.rect(surf, fox_preto, R(fx + 62, fy + 12, 6, 6))
+    pygame.draw.rect(surf, (255, 255, 255), R(fx + 64, fy + 13, 2, 2))
+    pygame.draw.rect(surf, fox_preto, R(fx + 68, fy + 20, 4, 4))
+    # Cauda com ponta clara.
+    pygame.draw.rect(surf, fox_laranja, R(fx, fy + 20, 18, 16))
+    pygame.draw.rect(surf, fox_laranja_claro, R(fx, fy + 18, 14, 8))
+    # Quatro patas (laranja mais escuro).
+    for lx in (14, 28, 42, 56):
+        pygame.draw.rect(surf, fox_perna, R(fx + lx, fy + 50, 10, 16))
+    # Barriga.
+    pygame.draw.rect(surf, fox_orelha_int, R(fx + 16, fy + 30, 36, 18))
+
+    # Carros pixel-art (vermelho, azul e amarelo) sobre as faixas.
+    carros = [
+        ((204, 34, 34), (153, 34, 17), 100, 535, 70, 28, 110, 528, 48, 16, 100, 560, 154, 560),
+        ((34, 68, 204), (17, 34, 136), 900, 592, 70, 28, 912, 585, 46, 16, 900, 617, 954, 617),
+        ((232, 192, 32), (192, 160, 16), 550, 638, 65, 26, 562, 631, 42, 14, 550, 661, 601, 661),
+    ]
+    for (corpo, teto, bx, by, bw, bh, tx, ty, tw, th, r1x, r1y, r2x, r2y) in carros:
+        pygame.draw.rect(surf, corpo, R(bx, by, bw, bh))
+        pygame.draw.rect(surf, teto, R(tx, ty, tw, th))
+        # Duas janelas no teto.
+        rect_alpha((200, 238, 255), 230, tx + 4, ty + 2, (tw - 14) // 2, th - 4)
+        rect_alpha((200, 238, 255), 230, tx + (tw // 2) + 2, ty + 2, (tw - 14) // 2, th - 4)
+        # Rodas.
+        pygame.draw.rect(surf, (34, 34, 34), R(r1x, r1y, 16, 8))
+        pygame.draw.rect(surf, (34, 34, 34), R(r2x, r2y, 16, 8))
+
+    return surf
+
+
+def criar_background_floresta_dia(width, height):
+    """Cria o background pixel-art de floresta de dia: sol, montanhas, rua, raposa na toca.
+
+    Reproduz a cena de assets/img/end_bg.svg usando pygame.draw, escalada
+    proporcionalmente do design original 1310x730 para o tamanho pedido.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface opaca contendo o cenário final.
+    """
+    surf = pygame.Surface((width, height))
+    sx = width / 1310.0
+    sy = height / 730.0
+
+    def R(x, y, w, h):
+        """Retorna um pygame.Rect escalado das coordenadas de design (1310x730)."""
+        return pygame.Rect(int(x * sx), int(y * sy), max(1, int(w * sx)), max(1, int(h * sy)))
+
+    def rect_alpha(cor, alpha, x, y, w, h):
+        """Desenha um retângulo semi-transparente."""
+        r = R(x, y, w, h)
+        s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
+        s.fill((*cor, alpha))
+        surf.blit(s, r.topleft)
+
+    def poly_alpha(cor, alpha, pts):
+        """Desenha um polígono semi-transparente com pontos em coords de design."""
+        scaled = [(int(x * sx), int(y * sy)) for (x, y) in pts]
+        min_x = min(p[0] for p in scaled)
+        min_y = min(p[1] for p in scaled)
+        max_x = max(p[0] for p in scaled)
+        max_y = max(p[1] for p in scaled)
+        s = pygame.Surface((max_x - min_x + 1, max_y - min_y + 1), pygame.SRCALPHA)
+        local = [(p[0] - min_x, p[1] - min_y) for p in scaled]
+        pygame.draw.polygon(s, (*cor, alpha), local)
+        surf.blit(s, (min_x, min_y))
+
+    # Céu gradiente azul de 3 paradas.
+    azul_topo = (42, 160, 232)
+    azul_meio = (109, 205, 245)
+    azul_baixo = (160, 224, 255)
+    for j in range(height):
+        f = j / max(1, height - 1)
+        if f < 0.55:
+            t = f / 0.55
+            cor = tuple(int(azul_topo[k] + (azul_meio[k] - azul_topo[k]) * t) for k in range(3))
+        else:
+            t = (f - 0.55) / 0.45
+            cor = tuple(int(azul_meio[k] + (azul_baixo[k] - azul_meio[k]) * t) for k in range(3))
+        pygame.draw.line(surf, cor, (0, j), (width, j))
+
+    # Sol no canto superior esquerdo (com halo e raios).
+    pygame.draw.rect(surf, (255, 224, 51), R(160, 55, 56, 56))
+    rect_alpha((255, 241, 118), 128, 170, 63, 36, 20)
+    for rx, ry, rw, rh in [(184, 36, 8, 14), (184, 114, 8, 14), (136, 78, 14, 8), (214, 78, 14, 8)]:
+        rect_alpha((255, 224, 51), 180, rx, ry, rw, rh)
+    for rx, ry in [(144, 46), (214, 46)]:
+        rect_alpha((255, 224, 51), 128, rx, ry, 10, 10)
+
+    # Nuvens (3 clusters).
+    for cluster in [
+        [(300, 50, 120, 34), (280, 62, 160, 30), (320, 40, 70, 26)],
+        [(700, 40, 100, 30), (680, 52, 140, 28)],
+        [(1050, 55, 90, 28), (1030, 65, 130, 26)],
+    ]:
+        for cx, cy, cw, ch in cluster:
+            rect_alpha((255, 255, 255), 230, cx, cy, cw, ch)
+
+    # Base verde sob as montanhas (fecha o gap antes da grama).
+    pygame.draw.rect(surf, (42, 122, 12), R(0, 340, 1260, 145))
+
+    # 5 montanhas principais.
+    for pts, cor in [
+        ([(0, 380), (150, 240), (300, 380)], (30, 96, 8)),
+        ([(180, 380), (360, 225), (540, 380)], (46, 138, 16)),
+        ([(420, 380), (600, 230), (780, 380)], (52, 140, 18)),
+        ([(660, 380), (840, 235), (1020, 380)], (46, 138, 16)),
+        ([(900, 380), (1080, 228), (1260, 380)], (42, 122, 12)),
+    ]:
+        scaled = [(int(x * sx), int(y * sy)) for (x, y) in pts]
+        pygame.draw.polygon(surf, cor, scaled)
+
+    # 5 montanhas da segunda camada, mais claras e semi-transparentes (preenchem vales).
+    for pts, cor in [
+        ([(80, 380), (230, 280), (380, 380)], (53, 150, 14)),
+        ([(310, 380), (480, 265), (650, 380)], (47, 136, 14)),
+        ([(560, 380), (720, 258), (880, 380)], (53, 150, 14)),
+        ([(800, 380), (960, 270), (1120, 380)], (47, 136, 14)),
+        ([(1060, 380), (1180, 272), (1300, 380)], (53, 150, 14)),
+    ]:
+        poly_alpha(cor, 217, pts)
+
+    # Grama (gradiente verde + faixa mais clara no topo).
+    grama_top = (58, 154, 26)
+    grama_bot = (42, 112, 16)
+    g_y0 = int(480 * sy)
+    g_y1 = min(height, int(720 * sy))
+    for j in range(g_y0, g_y1):
+        t = (j - g_y0) / max(1, g_y1 - g_y0)
+        cor = tuple(int(grama_top[k] + (grama_bot[k] - grama_top[k]) * t) for k in range(3))
+        pygame.draw.line(surf, cor, (0, j), (width, j))
+    pygame.draw.rect(surf, (74, 184, 32), R(0, 480, 1260, 14))
+
+    # Rua: 3 faixas de asfalto + faixa de grama no rodapé.
+    pygame.draw.rect(surf, (85, 85, 102), R(0, 510, 1260, 55))
+    pygame.draw.rect(surf, (74, 74, 90), R(0, 565, 1260, 45))
+    pygame.draw.rect(surf, (85, 85, 102), R(0, 610, 1260, 40))
+    pygame.draw.rect(surf, (58, 138, 26), R(0, 650, 1260, 70))
+    rect_alpha((245, 200, 66), 128, 0, 508, 1260, 4)
+    for x in range(0, 1260, 75):
+        rect_alpha((255, 255, 255), 180, x, 535, 55, 5)
+    for x in range(20, 1260, 80):
+        rect_alpha((245, 200, 66), 150, x, 585, 50, 5)
+
+    # 8 árvores: 4 à esquerda e 4 à direita, com camadas de verde mais claras pra cima.
+    arvores = [
+        # (tronco_x, tronco_y, tronco_w, tronco_h, [(folha_x, y, w, h, cor)...])
+        ((0, 450, 18, 60), [(0, 390, 80, 70, (45, 138, 14)), (8, 378, 64, 56, (53, 160, 16)), (16, 366, 48, 44, (61, 184, 18)), (24, 354, 32, 32, (72, 204, 22))]),
+        ((70, 455, 16, 55), [(54, 400, 64, 62, (45, 138, 14)), (62, 390, 48, 48, (53, 160, 16)), (70, 380, 32, 32, (61, 184, 18))]),
+        ((140, 458, 14, 52), [(124, 406, 58, 60, (45, 138, 14)), (132, 396, 42, 44, (53, 160, 16)), (140, 386, 26, 28, (61, 184, 18))]),
+        ((220, 460, 16, 50), [(202, 408, 60, 60, (53, 160, 16)), (210, 398, 44, 46, (61, 184, 18)), (218, 388, 28, 28, (72, 204, 22))]),
+        ((980, 458, 16, 52), [(964, 406, 60, 60, (45, 138, 14)), (972, 396, 44, 46, (53, 160, 16)), (980, 386, 28, 28, (61, 184, 18))]),
+        ((1060, 454, 18, 56), [(1042, 398, 66, 66, (45, 138, 14)), (1050, 386, 50, 52, (53, 160, 16)), (1058, 374, 34, 34, (61, 184, 18))]),
+        ((1148, 456, 16, 54), [(1132, 402, 62, 62, (45, 138, 14)), (1140, 392, 46, 48, (53, 160, 16)), (1148, 382, 30, 30, (61, 184, 18))]),
+        ((1220, 450, 18, 60), [(1200, 390, 60, 70, (45, 138, 14)), (1208, 380, 44, 54, (53, 160, 16)), (1216, 370, 28, 36, (61, 184, 18))]),
+    ]
+    for (tx, ty, tw, th), camadas in arvores:
+        pygame.draw.rect(surf, (107, 68, 35), R(tx, ty, tw, th))
+        for fx, fy, fw, fh, cor in camadas:
+            pygame.draw.rect(surf, cor, R(fx, fy, fw, fh))
+
+    # Toca da raposa: morro marrom com buraco escuro.
+    pygame.draw.rect(surf, (90, 58, 10), R(570, 475, 120, 35))
+    pygame.draw.rect(surf, (107, 74, 24), R(590, 480, 80, 28))
+    pygame.draw.rect(surf, (42, 24, 0), R(610, 468, 40, 30))
+    pygame.draw.rect(surf, (26, 15, 0), R(612, 470, 36, 26))
+
+    # Raposa vitoriosa em frente à toca (translated +490, +430 no SVG original).
+    fx, fy = 490, 430
+    laranja = (224, 90, 10)
+    laranja_claro = (240, 144, 80)
+    laranja_orelha = (240, 120, 48)
+    laranja_perna = (192, 72, 0)
+    preto = (26, 26, 26)
+    pygame.draw.rect(surf, laranja, R(fx + 10, fy + 28, 44, 26))
+    pygame.draw.rect(surf, laranja, R(fx + 30, fy + 4, 28, 28))
+    pygame.draw.rect(surf, laranja, R(fx + 32, fy, 10, 12))
+    pygame.draw.rect(surf, laranja, R(fx + 48, fy, 10, 12))
+    pygame.draw.rect(surf, laranja_orelha, R(fx + 34, fy + 2, 6, 8))
+    pygame.draw.rect(surf, laranja_orelha, R(fx + 50, fy + 2, 6, 8))
+    pygame.draw.rect(surf, laranja_claro, R(fx + 32, fy + 16, 22, 14))
+    pygame.draw.rect(surf, preto, R(fx + 34, fy + 12, 6, 5))
+    pygame.draw.rect(surf, preto, R(fx + 48, fy + 12, 6, 5))
+    pygame.draw.rect(surf, (255, 255, 255), R(fx + 36, fy + 13, 2, 2))
+    pygame.draw.rect(surf, (255, 255, 255), R(fx + 50, fy + 13, 2, 2))
+    pygame.draw.rect(surf, preto, R(fx + 52, fy + 22, 4, 4))
+    pygame.draw.rect(surf, laranja_orelha, R(fx + 14, fy + 32, 28, 18))
+    pygame.draw.rect(surf, laranja, R(fx, fy + 10, 14, 30))
+    pygame.draw.rect(surf, laranja_claro, R(fx, fy + 8, 12, 12))
+    for lx in (12, 26, 40):
+        pygame.draw.rect(surf, laranja_perna, R(fx + lx, fy + 50, 10, 14))
+
+    # Borboletas (rosa à esquerda, azul à direita).
+    rect_alpha((255, 136, 204), 205, 350, 430, 8, 6)
+    rect_alpha((255, 136, 204), 205, 360, 426, 8, 6)
+    rect_alpha((170, 102, 0), 180, 355, 432, 4, 10)
+    rect_alpha((136, 204, 255), 205, 870, 418, 8, 6)
+    rect_alpha((136, 204, 255), 205, 880, 414, 8, 6)
+    rect_alpha((170, 102, 0), 180, 875, 420, 4, 10)
+
+    return surf
