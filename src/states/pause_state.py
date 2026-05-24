@@ -4,6 +4,7 @@ import pygame
 
 from src.settings import COR_DOURADO, COR_TEXTO, COR_TEXTO_SEC, COR_VERDE_CLARO, HEIGHT, WIDTH
 from src.states.base_state import BaseState
+from src.utils.fonts import get_font
 from src.utils.sprite_factory import desenhar_painel, desenhar_titulo_estilizado
 
 
@@ -14,9 +15,26 @@ class PauseState(BaseState):
         """Inicializa a pausa guardando referência ao GameState interrompido."""
         super().__init__(game)
         self.game_state = game_state
-        self.font_titulo = pygame.font.SysFont(None, 80)
-        self.font_subtitulo = pygame.font.SysFont(None, 26)
-        self.font_opcoes = pygame.font.SysFont(None, 32)
+        self.font_titulo = get_font(72, bold=True)
+        self.font_subtitulo = get_font(23)
+        self.font_opcoes = get_font(24, bold=True)
+        self.font_tecla = get_font(19, bold=True)
+
+    def _draw_pause_option(self, screen, rect, key, text, muted=False):
+        """Desenha uma opcao de pausa com tecla destacada."""
+        cor_texto = COR_TEXTO_SEC if muted else COR_TEXTO
+        borda = (255, 255, 255, 45) if muted else (255, 215, 0, 150)
+        pygame.draw.rect(screen, (255, 255, 255, 22), rect, border_radius=13)
+        pygame.draw.rect(screen, borda, rect, 1, border_radius=13)
+
+        key_rect = pygame.Rect(rect.x + 12, rect.y + 9, 58, rect.h - 18)
+        pygame.draw.rect(screen, (16, 24, 22, 220), key_rect, border_radius=9)
+        pygame.draw.rect(screen, COR_DOURADO if not muted else COR_TEXTO_SEC, key_rect, 1, border_radius=9)
+        key_surf = self.font_tecla.render(key, True, COR_DOURADO if not muted else COR_TEXTO_SEC)
+        screen.blit(key_surf, key_surf.get_rect(center=key_rect.center))
+
+        text_surf = self.font_opcoes.render(text, True, cor_texto)
+        screen.blit(text_surf, text_surf.get_rect(midleft=(rect.x + 88, rect.centery)))
 
     def handle_events(self):
         """Processa comandos da tela de pausa sem atualizar o GameState pausado."""
@@ -57,13 +75,10 @@ class PauseState(BaseState):
         screen.blit(subtitulo, subtitulo.get_rect(center=(WIDTH // 2, painel_y + 95)))
 
         opcoes = [
-            ("P - Continuar", COR_TEXTO),
-            ("M - Menu Principal", COR_TEXTO),
-            ("ESC - Sair", COR_TEXTO_SEC),
+            ("P", "Continuar", False),
+            ("M", "Menu principal", False),
+            ("ESC", "Sair", True),
         ]
-        for i, (texto, cor) in enumerate(opcoes):
-            opcao_surf = self.font_opcoes.render(texto, True, cor)
-            screen.blit(
-                opcao_surf,
-                opcao_surf.get_rect(center=(WIDTH // 2, painel_y + 150 + i * 45)),
-            )
+        for i, (tecla, texto, muted) in enumerate(opcoes):
+            option_rect = pygame.Rect(painel_x + 56, painel_y + 128 + i * 52, 328, 42)
+            self._draw_pause_option(screen, option_rect, tecla, texto, muted)

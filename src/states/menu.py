@@ -17,6 +17,7 @@ from src.settings import (
 from src.states.base_state import BaseState
 from src.states.game_state import GameState
 from src.states.instructions_state import InstructionsState
+from src.utils.fonts import get_font
 from src.utils.sprite_factory import (
     criar_arvore,
     criar_arvore_silhueta,
@@ -36,10 +37,12 @@ class MenuState(BaseState):
 
     def __init__(self, game):
         super().__init__(game)
-        self.font_titulo = pygame.font.SysFont(None, 110, bold=True)
-        self.font_subtitulo = pygame.font.SysFont(None, 36)
-        self.font_opcao = pygame.font.SysFont(None, 32)
-        self.font_rodape = pygame.font.SysFont(None, 22)
+        self.font_titulo = get_font(96, bold=True)
+        self.font_subtitulo = get_font(32)
+        self.font_opcao = get_font(26, bold=True)
+        self.font_key = get_font(20, bold=True)
+        self.font_hint = pygame.font.SysFont("Arial", 18)
+        self.font_rodape = get_font(18)
 
         self.raposa_decoracao = criar_raposa_estatica(118, 118)
         self.arvore_silhueta = criar_arvore_silhueta(40, 60, (18, 10, 32))
@@ -84,6 +87,27 @@ class MenuState(BaseState):
         self.mostrar_enter = True
 
         self.game.sound_manager.play_music("assets/sounds/menu.wav")
+
+    def _draw_menu_button(self, screen, rect, key, text, active=False):
+        """Desenha uma opcao do menu com tecla destacada."""
+        fill = (36, 74, 46, 225) if active else (18, 30, 27, 205)
+        border = (255, 215, 90) if active else (180, 215, 170)
+        pygame.draw.rect(screen, fill, rect, border_radius=14)
+        pygame.draw.rect(screen, border, rect, 2, border_radius=14)
+        if active:
+            pygame.draw.rect(
+                screen, (255, 215, 90), (rect.x, rect.y, 7, rect.h), border_radius=14
+            )
+
+        key_rect = pygame.Rect(rect.x + 14, rect.y + 10, 104, rect.h - 20)
+        pygame.draw.rect(screen, (18, 26, 24, 210), key_rect, border_radius=10)
+        pygame.draw.rect(screen, border, key_rect, 1, border_radius=10)
+
+        key_surf = self.font_key.render(key, True, COR_DOURADO)
+        screen.blit(key_surf, key_surf.get_rect(center=key_rect.center))
+        text_color = (255, 240, 160) if active else COR_TEXTO
+        text_surf = self.font_opcao.render(text, True, text_color)
+        screen.blit(text_surf, text_surf.get_rect(midleft=(rect.x + 140, rect.centery)))
 
     def handle_events(self):
         for event in pygame.event.get():
@@ -166,23 +190,19 @@ class MenuState(BaseState):
         subtitulo = self.font_subtitulo.render("A travessia da raposa", True, COR_VERDE_CLARO)
         screen.blit(subtitulo, subtitulo.get_rect(center=(WIDTH // 2, 152)))
 
-        painel_x = WIDTH // 2 - 210
+        painel_x = WIDTH // 2 - 230
         painel_y = 198
-        desenhar_painel(screen, painel_x, painel_y, 420, 196)
+        desenhar_painel(screen, painel_x, painel_y, 460, 206)
 
-        if self.mostrar_enter:
-            pulse = 0.5 + 0.5 * math.sin(self.tempo * 2.8)
-            g_val = int(192 + 63 * pulse)
-            enter = self.font_opcao.render(
-                "Pressione ENTER para jogar", True, (255, g_val, 18)
-            )
-            screen.blit(enter, enter.get_rect(center=(WIDTH // 2, painel_y + 56)))
+        jogar_rect = pygame.Rect(painel_x + 28, painel_y + 28, 404, 58)
+        self._draw_menu_button(screen, jogar_rect, "ENTER", "Jogar", self.mostrar_enter)
 
-        instrucoes = self.font_opcao.render("I - Instruções", True, COR_TEXTO)
-        screen.blit(instrucoes, instrucoes.get_rect(center=(WIDTH // 2, painel_y + 108)))
+        self._draw_menu_button(
+            screen, pygame.Rect(painel_x + 28, painel_y + 98, 404, 50), "I", "Instruções"
+        )
 
-        pausa = self.font_rodape.render("P pausa durante o jogo", True, COR_TEXTO_SEC)
-        screen.blit(pausa, pausa.get_rect(center=(WIDTH // 2, painel_y + 154)))
+        pausa = self.font_hint.render("Durante o jogo: P para pausar", True, COR_TEXTO_SEC)
+        screen.blit(pausa, pausa.get_rect(center=(WIDTH // 2, painel_y + 174)))
 
         rodape = self.font_rodape.render("Insper 2026 — Design de Software", True, COR_TEXTO)
         screen.blit(rodape, rodape.get_rect(center=(WIDTH // 2, HEIGHT - 20)))
