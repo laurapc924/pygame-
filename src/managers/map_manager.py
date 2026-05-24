@@ -1,4 +1,4 @@
-"""Gerenciador do mapa: floresta nas laterais e 3 faixas de rua verticais."""
+"""Gerenciador do mapa: laterais temáticas e faixas de rua verticais."""
 
 import pygame
 import random
@@ -22,9 +22,8 @@ from src.utils.sprite_factory import (
 
 
 SIDE_STRIP_WIDTH = 120
-NUM_LANES = 3
+DEFAULT_NUM_LANES = 3
 ROAD_AREA_WIDTH = WIDTH - 2 * SIDE_STRIP_WIDTH
-LANE_WIDTH = ROAD_AREA_WIDTH // NUM_LANES
 
 DASH_LENGTH = 20
 DASH_GAP = 15
@@ -59,26 +58,19 @@ class MapManager:
 
     def __init__(self):
         """Inicializa as faixas laterais de floresta, as faixas de rua e a zona de chegada."""
+        self.num_lanes = DEFAULT_NUM_LANES
+        self.lane_width = ROAD_AREA_WIDTH // self.num_lanes
         self.left_strip = pygame.Rect(0, 0, SIDE_STRIP_WIDTH, HEIGHT)
-        right_strip_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
-        self.right_strip = pygame.Rect(
-            right_strip_x, 0, WIDTH - right_strip_x, HEIGHT
-        )
-        self.lanes = [
-            pygame.Rect(
-                SIDE_STRIP_WIDTH + i * LANE_WIDTH, 0, LANE_WIDTH, HEIGHT
-            )
-            for i in range(NUM_LANES)
-        ]
+        self._rebuild_lanes(self.num_lanes)
         self.goal_zone = pygame.Rect(WIDTH - 80, 0, 60, HEIGHT)
         self.car_images = self._load_car_images()
 
         # Texturas de fundo geradas UMA vez (otimização: nunca no draw).
         self.textura_grama_esquerda = criar_grama_textura(SIDE_STRIP_WIDTH, HEIGHT)
         self.textura_grama_direita = criar_grama_textura(
-            WIDTH - (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH), HEIGHT
+            self.right_strip.width, HEIGHT
         )
-        self.textura_asfalto = criar_asfalto_textura(LANE_WIDTH, HEIGHT)
+        self.textura_asfalto = criar_asfalto_textura(self.lane_width, HEIGHT)
 
         # Decorações laterais — definidas por fase via set_phase_config.
         self.decoracoes = []
@@ -87,8 +79,23 @@ class MapManager:
         self.current_phase_config = None
         self.gradient_background = None
         self.snow_particles = []
-        # Brilho de farol pré-renderizado, usado na fase NOITE FINAL.
+        # Brilho de farol pré-renderizado, usado na fase RUA DE NOITE.
         self._headlight_glow = self._criar_headlight_glow()
+
+    def _rebuild_lanes(self, lane_count):
+        """Recalcula faixas e lateral direita quando a fase muda a quantidade de faixas."""
+        self.num_lanes = lane_count
+        self.lane_width = ROAD_AREA_WIDTH // self.num_lanes
+        right_strip_x = SIDE_STRIP_WIDTH + self.num_lanes * self.lane_width
+        self.right_strip = pygame.Rect(
+            right_strip_x, 0, WIDTH - right_strip_x, HEIGHT
+        )
+        self.lanes = [
+            pygame.Rect(
+                SIDE_STRIP_WIDTH + i * self.lane_width, 0, self.lane_width, HEIGHT
+            )
+            for i in range(self.num_lanes)
+        ]
 
     def set_phase_config(self, config):
         """Atualiza cores e visuais conforme a fase atual.
@@ -100,15 +107,15 @@ class MapManager:
             config: Dicionário de configuração da fase (vindo do LevelManager).
         """
         self.current_phase_config = config
-        largura_direita = WIDTH - (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH)
+        self._rebuild_lanes(config.get("lane_count", DEFAULT_NUM_LANES))
         self.textura_grama_esquerda = criar_grama_textura_colorida(
             SIDE_STRIP_WIDTH, HEIGHT, config["grass_color"]
         )
         self.textura_grama_direita = criar_grama_textura_colorida(
-            largura_direita, HEIGHT, config["grass_color"]
+            self.right_strip.width, HEIGHT, config["grass_color"]
         )
         self.textura_asfalto = criar_asfalto_textura_colorida(
-            LANE_WIDTH, HEIGHT, config["asphalt_color"]
+            self.lane_width, HEIGHT, config["asphalt_color"]
         )
         self.gradient_background = pygame.Surface((WIDTH, HEIGHT))
         desenhar_gradiente_vertical(
@@ -169,7 +176,7 @@ class MapManager:
             )
 
     def _draw_headlights(self, screen):
-        """Desenha o brilho dos faróis à frente de cada carro (fase NOITE FINAL).
+        """Desenha o brilho dos faróis à frente de cada carro (fase RUA DE NOITE).
 
         Args:
             screen: Surface destino.
@@ -215,7 +222,7 @@ class MapManager:
 
         # Faixa direita: 6 decorações empilhadas em 1 coluna x 6 linhas.
         # Faixa estreita; ficam no início da faixa, sem cobrir a goal_zone.
-        direita_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
+        direita_x = self.right_strip.x
         linhas_dir = 6
         slot_h_dir = HEIGHT // linhas_dir
         for linha in range(linhas_dir):
@@ -242,13 +249,15 @@ class MapManager:
         for indice_faixa, lane in enumerate(lanes):
             # Alterna direção: faixa 0 desce, faixa 1 sobe, faixa 2 desce
             direcao = 1 if indice_faixa % 2 == 0 else -1
+            # Desloca cada faixa no eixo Y para evitar paredes de carros alinhados.
+            offset_faixa = (indice_faixa * espacamento // len(lanes)) % espacamento
 
             for i in range(cars_per_lane):
                 velocidade = random.randint(speed_min, speed_max)
                 imagem = random.choice(self.car_images)
                 largura_carro = imagem.get_width()
                 x = lane - largura_carro // 2
-                y = i * espacamento
+                y = (i * espacamento + offset_faixa + espacamento // 4) % HEIGHT
                 carro = Obstacle(x, y, velocidade, direcao, imagem)
                 carro.lane_id = indice_faixa
                 self.obstacles.add(carro)
@@ -276,7 +285,7 @@ class MapManager:
         screen.blit(self.textura_grama_esquerda, (0, 0))
         screen.blit(
             self.textura_grama_direita,
-            (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH, 0),
+            (self.right_strip.x, 0),
         )
         # Textura de asfalto em cada faixa de rua (self.lanes guarda Rects).
         for lane in self.lanes:
@@ -284,8 +293,8 @@ class MapManager:
         # Decorações laterais, desenhadas sobre a grama e antes do tracejado.
         for sprite, x, y in self.decoracoes:
             screen.blit(sprite, (x, y))
-        for i in range(1, NUM_LANES):
-            x = SIDE_STRIP_WIDTH + i * LANE_WIDTH
+        for i in range(1, self.num_lanes):
+            x = SIDE_STRIP_WIDTH + i * self.lane_width
             self._draw_dashed_line(screen, x)
         # Neve cai por cima do cenário, antes da zona de chegada.
         self._draw_snow(screen)
