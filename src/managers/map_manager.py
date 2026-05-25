@@ -8,8 +8,20 @@ from src.entities.powerup import PowerUp
 from src.settings import HEIGHT, IMG_DIR, WHITE, WIDTH
 from src.utils.lateral_bars import criar_lateral
 from src.utils.sprite_factory import (
+    criar_ameia,
+    criar_arvore,
+    criar_arvore_floresta,
     criar_asfalto_textura,
     criar_asfalto_textura_colorida,
+    criar_cacto,
+    criar_cerca,
+    criar_coqueiro,
+    criar_grama_textura,
+    criar_grama_textura_colorida,
+    criar_junco,
+    criar_pedra,
+    criar_pinheiro,
+    criar_poste,
     desenhar_gradiente_vertical,
 )
 
@@ -21,6 +33,23 @@ ROAD_AREA_WIDTH = WIDTH - 2 * SIDE_STRIP_WIDTH
 DASH_LENGTH = 20
 DASH_GAP = 15
 DASH_THICKNESS = 3
+
+DECOR_W = 50
+DECOR_H = 80
+
+# Sprites decorativos laterais disponíveis, indexados pelo tema da fase.
+DECORACOES = {
+    "arvore": criar_arvore,
+    "poste": criar_poste,
+    "coqueiro": criar_coqueiro,
+    "pinheiro": criar_pinheiro,
+    "pedra": criar_pedra,
+    "cerca": criar_cerca,
+    "cacto": criar_cacto,
+    "ameia": criar_ameia,
+    "junco": criar_junco,
+    "arvore_floresta": criar_arvore_floresta,
+}
 
 CAR_FILES = [
     "car_red_1.png",
