@@ -13,6 +13,7 @@ from src.states.game_over_state import GameOverState
 from src.states.pause_state import PauseState
 from src.states.victory_state import VictoryState
 from src.utils.fonts import get_font
+from src.utils.sprite_factory import criar_bandeira
 
 
 class GameState(BaseState):
@@ -47,6 +48,7 @@ class GameState(BaseState):
         self.transition_message = ""
         self.transition_phase_name = ""
         self.transition_phase_subtitle = ""
+        self.transition_flag = None
         self.invincible = False
         self.invincible_timer = 0.0
         self.invincible_duration = 3.0
@@ -216,6 +218,7 @@ class GameState(BaseState):
         self.transition_message = f"FASE {self.level_manager.current_level}"
         self.transition_phase_name = nova_config["name"]
         self.transition_phase_subtitle = nova_config["subtitle"]
+        self.transition_flag = criar_bandeira(nova_config["decoration"], 54, 36)
         self.is_transitioning = True
         self.transition_timer = 0
 
@@ -288,7 +291,21 @@ class GameState(BaseState):
             linha2 = self.font_phase_name.render(
                 self.transition_phase_name, True, (255, 255, 255)
             )
-            screen.blit(linha2, linha2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
+            # Bandeira ao lado do nome do país (centraliza o grupo bandeira+nome).
+            linha2_y = HEIGHT // 2 + 20
+            if self.transition_flag is not None:
+                gap = 14
+                grupo_w = self.transition_flag.get_width() + gap + linha2.get_width()
+                inicio_x = WIDTH // 2 - grupo_w // 2
+                bandeira_y = linha2_y - self.transition_flag.get_height() // 2
+                screen.blit(self.transition_flag, (inicio_x, bandeira_y))
+                screen.blit(
+                    linha2,
+                    (inicio_x + self.transition_flag.get_width() + gap,
+                     linha2_y - linha2.get_height() // 2),
+                )
+            else:
+                screen.blit(linha2, linha2.get_rect(center=(WIDTH // 2, linha2_y)))
             linha3 = self.font_phase_subtitle.render(
                 self.transition_phase_subtitle, True, (200, 200, 200)
             )

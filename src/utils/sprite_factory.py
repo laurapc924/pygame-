@@ -406,22 +406,28 @@ def criar_grama_textura_colorida(width, height, cor_base):
     return surface
 
 
-def criar_asfalto_textura_colorida(width, height, cor_base):
-    """Cria uma textura de asfalto na cor dada, com manchas escuras e pixels claros.
+def criar_asfalto_textura_colorida(width, height, cor_base, sujo=False):
+    """Cria uma textura de asfalto na cor dada.
 
-    Igual a criar_asfalto_textura, mas usando cor_base; as manchas são versões
-    escurecidas e os pixels desgastados são versões clareadas de cor_base.
+    Sem o parâmetro `sujo`, o asfalto fica liso (só cor de base com leve
+    granulado). Com `sujo=True`, adiciona manchas escuras e pixels claros pra
+    simular pista molhada/desgastada — útil pra fases com chuva ou neve.
 
     Args:
         width: Largura da Surface em pixels.
         height: Altura da Surface em pixels.
         cor_base: Cor (R, G, B) de base do asfalto.
+        sujo: Se True, aplica manchas e pixels claros pra parecer molhado.
 
     Returns:
         pygame.Surface opaca com a textura de asfalto.
     """
     surface = pygame.Surface((width, height))
     surface.fill(cor_base)
+
+    if not sujo:
+        return surface
+
     cor_manchas = _escurecer(cor_base, 0.2)
     cor_claros = _clarear(cor_base, 0.25)
 
@@ -1080,5 +1086,352 @@ def criar_background_floresta_dia(width, height):
     rect_alpha((136, 204, 255), 205, 870, 418, 8, 6)
     rect_alpha((136, 204, 255), 205, 880, 414, 8, 6)
     rect_alpha((170, 102, 0), 180, 875, 420, 4, 10)
+
+    return surf
+
+
+# ============================== Bandeiras dos países ==============================
+
+def _bandeira_brasil(w, h):
+    """Bandeira do Brasil simplificada: retângulo verde, losango amarelo, círculo azul."""
+    surf = pygame.Surface((w, h))
+    surf.fill((0, 156, 59))
+    pygame.draw.polygon(
+        surf, (255, 223, 0),
+        [(w // 2, 2), (w - 3, h // 2), (w // 2, h - 3), (3, h // 2)],
+    )
+    pygame.draw.circle(surf, (0, 39, 118), (w // 2, h // 2), max(2, h // 4))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_inglaterra(w, h):
+    """Bandeira da Inglaterra (cruz de São Jorge) simplificada."""
+    surf = pygame.Surface((w, h))
+    surf.fill((255, 255, 255))
+    thick = max(2, h // 4)
+    pygame.draw.rect(surf, (200, 16, 46), (0, h // 2 - thick // 2, w, thick))
+    pygame.draw.rect(surf, (200, 16, 46), (w // 2 - thick // 2, 0, thick, h))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_havai(w, h):
+    """Bandeira do Havaí simplificada: 8 faixas + canto azul."""
+    surf = pygame.Surface((w, h))
+    cores = [(255, 255, 255), (200, 16, 46), (0, 39, 118)] * 3
+    stripe_h = max(1, h // 8)
+    for i in range(8):
+        pygame.draw.rect(surf, cores[i], (0, i * stripe_h, w, stripe_h + 1))
+    uj_w, uj_h = w // 2, 4 * stripe_h
+    pygame.draw.rect(surf, (0, 39, 118), (0, 0, uj_w, uj_h))
+    pygame.draw.line(surf, (255, 255, 255), (0, 0), (uj_w - 1, uj_h - 1), 1)
+    pygame.draw.line(surf, (255, 255, 255), (uj_w - 1, 0), (0, uj_h - 1), 1)
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_suica(w, h):
+    """Bandeira da Suíça: fundo vermelho com cruz branca."""
+    surf = pygame.Surface((w, h))
+    surf.fill((218, 41, 28))
+    arm_w = max(2, w // 5)
+    arm_h = max(2, h // 4)
+    pygame.draw.rect(surf, (255, 255, 255), (w // 2 - arm_w // 2, 3, arm_w, h - 6))
+    pygame.draw.rect(surf, (255, 255, 255), (4, h // 2 - arm_h // 2, w - 8, arm_h))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_franca(w, h):
+    """Bandeira da França: 3 faixas verticais azul/branco/vermelho."""
+    surf = pygame.Surface((w, h))
+    stripe = w // 3
+    pygame.draw.rect(surf, (0, 35, 149), (0, 0, stripe, h))
+    pygame.draw.rect(surf, (255, 255, 255), (stripe, 0, stripe, h))
+    pygame.draw.rect(surf, (237, 41, 57), (2 * stripe, 0, w - 2 * stripe, h))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_africa_sul(w, h):
+    """Bandeira da África do Sul simplificada (vermelho/azul + chevron verde + cunha preta)."""
+    surf = pygame.Surface((w, h))
+    pygame.draw.rect(surf, (224, 30, 46), (0, 0, w, h // 2))
+    pygame.draw.rect(surf, (0, 105, 168), (0, h // 2, w, h - h // 2))
+    pygame.draw.polygon(surf, (0, 119, 73), [(0, 0), (w // 2, h // 2), (0, h)])
+    pygame.draw.polygon(surf, (0, 0, 0), [(0, 2), (w // 3, h // 2), (0, h - 2)])
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_egito(w, h):
+    """Bandeira do Egito: 3 faixas vermelho/branco/preto com águia dourada simplificada."""
+    surf = pygame.Surface((w, h))
+    s = h // 3
+    pygame.draw.rect(surf, (206, 17, 38), (0, 0, w, s))
+    pygame.draw.rect(surf, (255, 255, 255), (0, s, w, s))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 2 * s, w, h - 2 * s))
+    pygame.draw.circle(surf, (199, 156, 51), (w // 2, h // 2), max(2, h // 6))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_canada(w, h):
+    """Bandeira do Canadá: vermelho/branco/vermelho vertical com folha de bordo simplificada."""
+    surf = pygame.Surface((w, h))
+    surf.fill((255, 255, 255))
+    side = w // 4
+    pygame.draw.rect(surf, (255, 0, 0), (0, 0, side, h))
+    pygame.draw.rect(surf, (255, 0, 0), (w - side, 0, side, h))
+    cx, cy = w // 2, h // 2
+    leaf = max(2, min(w, h) // 4)
+    pygame.draw.polygon(
+        surf, (255, 0, 0),
+        [(cx, cy - leaf), (cx + leaf, cy), (cx, cy + leaf), (cx - leaf, cy)],
+    )
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_belgica(w, h):
+    """Bandeira da Bélgica: 3 faixas verticais preto/amarelo/vermelho."""
+    surf = pygame.Surface((w, h))
+    stripe = w // 3
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, stripe, h))
+    pygame.draw.rect(surf, (255, 230, 0), (stripe, 0, stripe, h))
+    pygame.draw.rect(surf, (239, 51, 64), (2 * stripe, 0, w - 2 * stripe, h))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+def _bandeira_italia(w, h):
+    """Bandeira da Itália: 3 faixas verticais verde/branco/vermelho."""
+    surf = pygame.Surface((w, h))
+    stripe = w // 3
+    pygame.draw.rect(surf, (0, 146, 70), (0, 0, stripe, h))
+    pygame.draw.rect(surf, (255, 255, 255), (stripe, 0, stripe, h))
+    pygame.draw.rect(surf, (206, 43, 55), (2 * stripe, 0, w - 2 * stripe, h))
+    pygame.draw.rect(surf, (0, 0, 0), (0, 0, w, h), 1)
+    return surf
+
+
+_BANDEIRAS = {
+    "amazonia": _bandeira_brasil,
+    "londres": _bandeira_inglaterra,
+    "havai": _bandeira_havai,
+    "suica": _bandeira_suica,
+    "franca": _bandeira_franca,
+    "africa": _bandeira_africa_sul,
+    "egito": _bandeira_egito,
+    "canada": _bandeira_canada,
+    "belgica": _bandeira_belgica,
+    "milao": _bandeira_italia,
+}
+
+
+def criar_bandeira(tema, width=36, height=24):
+    """Cria a Surface de uma bandeira simplificada do tema/país da fase.
+
+    Args:
+        tema: Chave do tema (mesma usada em "decoration" no level_manager).
+        width: Largura da bandeira em pixels.
+        height: Altura da bandeira em pixels.
+
+    Returns:
+        pygame.Surface opaca com a bandeira pixel-art.
+    """
+    fn = _BANDEIRAS.get(tema, _bandeira_brasil)
+    return fn(width, height)
+
+
+def criar_background_perdeu(width, height):
+    """Cria o background pixel-art da tela de Game Over: floresta noturna com aurora.
+
+    Reproduz a cena de assets/img/end_lose_bg.svg em pygame.draw — céu escuro,
+    aurora dourada, montanhas distantes, floresta densa, lua/orbe dourado,
+    toca iluminada e a raposa na cena, com vagalumes e estrada com brilho.
+
+    Args:
+        width: Largura da Surface em pixels.
+        height: Altura da Surface em pixels.
+
+    Returns:
+        pygame.Surface opaca com o cenário sombrio do fim de jogo.
+    """
+    surf = pygame.Surface((width, height))
+    sx = width / 1310.0
+    sy = height / 730.0
+
+    def R(x, y, w, h):
+        """Retorna um pygame.Rect escalado das coordenadas de design (1310x730)."""
+        return pygame.Rect(int(x * sx), int(y * sy), max(1, int(w * sx)), max(1, int(h * sy)))
+
+    def rect_alpha(cor, alpha, x, y, w, h):
+        """Desenha um retângulo semi-transparente."""
+        r = R(x, y, w, h)
+        s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
+        s.fill((*cor, alpha))
+        surf.blit(s, r.topleft)
+
+    def poly(cor, pts):
+        """Desenha um polígono opaco em coords de design."""
+        scaled = [(int(x * sx), int(y * sy)) for (x, y) in pts]
+        pygame.draw.polygon(surf, cor, scaled)
+
+    # Céu noturno com gradiente de 4 paradas (escuro -> marrom -> alaranjado).
+    stops = [
+        (0.0, (10, 10, 24)),
+        (0.40, (26, 16, 0)),
+        (0.70, (58, 32, 0)),
+        (1.0, (42, 21, 0)),
+    ]
+    for j in range(height):
+        f = j / max(1, height - 1)
+        s1, c1 = stops[0]
+        s2, c2 = stops[-1]
+        for k in range(len(stops)):
+            if stops[k][0] >= f:
+                s2, c2 = stops[k]
+                if k > 0:
+                    s1, c1 = stops[k - 1]
+                break
+        if s2 == s1:
+            cor = c2
+        else:
+            t = (f - s1) / (s2 - s1)
+            cor = tuple(int(c1[i] + (c2[i] - c1[i]) * t) for i in range(3))
+        pygame.draw.line(surf, cor, (0, j), (width, j))
+
+    # Estrelas fracas no topo.
+    for x, y, a in [
+        (100, 25, 153), (280, 40, 102), (450, 18, 128), (700, 30, 77),
+        (950, 22, 153), (1100, 45, 102), (1220, 28, 128), (60, 70, 77),
+        (380, 65, 102), (820, 60, 77),
+    ]:
+        rect_alpha((255, 255, 255), a, x, y, 2, 2)
+
+    # Aurora/pôr-do-sol — faixas douradas/alaranjadas suaves.
+    rect_alpha((245, 200, 66), 38, 0, 180, 1260, 200)
+    rect_alpha((255, 140, 0), 51, 200, 200, 860, 160)
+    rect_alpha((255, 140, 0), 18, 0, 240, 1260, 100)
+    rect_alpha((255, 140, 0), 13, 0, 300, 1260, 80)
+
+    # Montanhas distantes (silhuetas escuras).
+    for pts, cor in [
+        ([(0, 400), (120, 280), (240, 400)], (15, 26, 10)),
+        ([(100, 400), (220, 300), (340, 400)], (18, 30, 12)),
+        ([(300, 400), (440, 260), (580, 400)], (14, 24, 8)),
+        ([(500, 400), (620, 290), (740, 400)], (17, 27, 10)),
+        ([(680, 400), (800, 270), (920, 400)], (15, 26, 10)),
+        ([(880, 400), (1000, 295), (1120, 400)], (18, 30, 12)),
+        ([(1060, 400), (1180, 275), (1300, 400)], (14, 24, 8)),
+    ]:
+        poly(cor, pts)
+
+    # Chão escuro com gradiente.
+    g_y0 = int(480 * sy)
+    g_y1 = min(height, int(720 * sy))
+    g_top = (26, 48, 16)
+    g_bot = (15, 31, 8)
+    for j in range(g_y0, g_y1):
+        t = (j - g_y0) / max(1, g_y1 - g_y0)
+        cor = tuple(int(g_top[k] + (g_bot[k] - g_top[k]) * t) for k in range(3))
+        pygame.draw.line(surf, cor, (0, j), (width, j))
+
+    # Estradas sombrias com brilho dourado.
+    pygame.draw.rect(surf, (17, 17, 24), R(0, 510, 1260, 55))
+    pygame.draw.rect(surf, (13, 13, 21), R(0, 565, 1260, 45))
+    pygame.draw.rect(surf, (17, 17, 24), R(0, 610, 1260, 40))
+    pygame.draw.rect(surf, (10, 16, 10), R(0, 650, 1260, 70))
+    rect_alpha((245, 200, 66), 77, 0, 508, 1260, 4)
+    rect_alpha((245, 200, 66), 38, 0, 563, 1260, 2)
+    for x in range(0, 1260, 75):
+        rect_alpha((245, 200, 66), 128, x, 535, 55, 5)
+
+    # Floresta densa em ambos os lados (8 árvores em verdes escuros).
+    arvores = [
+        ((0, 450, 18, 60), [
+            (0, 390, 80, 70, (26, 74, 10)), (8, 378, 64, 56, (30, 90, 14)),
+            (16, 366, 48, 44, (36, 107, 18)), (24, 354, 32, 32, (42, 122, 22)),
+        ]),
+        ((70, 455, 16, 55), [
+            (54, 400, 64, 62, (26, 74, 10)), (62, 390, 48, 48, (30, 90, 14)),
+            (70, 380, 32, 32, (36, 107, 18)),
+        ]),
+        ((140, 458, 14, 52), [
+            (124, 406, 58, 60, (26, 74, 10)), (132, 396, 42, 44, (36, 107, 18)),
+            (140, 386, 26, 28, (42, 122, 22)),
+        ]),
+        ((220, 460, 16, 50), [
+            (202, 408, 60, 60, (30, 90, 14)), (210, 398, 44, 46, (36, 107, 18)),
+            (218, 388, 28, 28, (42, 122, 22)),
+        ]),
+        ((980, 458, 16, 52), [
+            (964, 406, 60, 60, (26, 74, 10)), (972, 396, 44, 46, (30, 90, 14)),
+            (980, 386, 28, 28, (36, 107, 18)),
+        ]),
+        ((1060, 454, 18, 56), [
+            (1042, 398, 66, 66, (26, 74, 10)), (1050, 386, 50, 52, (30, 90, 14)),
+            (1058, 374, 34, 34, (36, 107, 18)),
+        ]),
+        ((1148, 456, 16, 54), [
+            (1132, 402, 62, 62, (26, 74, 10)), (1140, 392, 46, 48, (30, 90, 14)),
+            (1148, 382, 30, 30, (42, 122, 22)),
+        ]),
+        ((1220, 450, 18, 60), [
+            (1200, 390, 60, 70, (26, 74, 10)), (1208, 380, 44, 54, (30, 90, 14)),
+            (1216, 370, 28, 36, (42, 122, 22)),
+        ]),
+    ]
+    for (tx, ty, tw, th), camadas in arvores:
+        pygame.draw.rect(surf, (61, 34, 16), R(tx, ty, tw, th))
+        for fx, fy, fw, fh, cor in camadas:
+            pygame.draw.rect(surf, cor, R(fx, fy, fw, fh))
+
+    # Toca da raposa com brilho dourado.
+    pygame.draw.rect(surf, (42, 24, 0), R(570, 475, 120, 35))
+    pygame.draw.rect(surf, (58, 34, 0), R(590, 480, 80, 28))
+    pygame.draw.rect(surf, (26, 15, 0), R(610, 468, 40, 30))
+    pygame.draw.rect(surf, (16, 10, 0), R(612, 470, 36, 26))
+    rect_alpha((245, 200, 66), 31, 608, 466, 44, 36)
+    rect_alpha((245, 200, 66), 153, 622, 476, 4, 4)
+    rect_alpha((245, 200, 66), 102, 634, 472, 4, 4)
+    rect_alpha((245, 200, 66), 128, 628, 484, 4, 4)
+
+    # Vagalumes brilhando entre as árvores.
+    for x, y, a in [
+        (290, 430, 205), (320, 445, 153), (350, 420, 180),
+        (880, 435, 180), (910, 418, 128), (940, 442, 205),
+    ]:
+        rect_alpha((245, 200, 66), a, x, y, 4, 4)
+
+    # Caminho até a toca (terra batida).
+    rect_alpha((42, 30, 10), 153, 595, 500, 70, 12)
+    rect_alpha((36, 26, 8), 128, 600, 512, 60, 10)
+
+    # Raposa vitoriosa (translated +490, +430 no SVG original).
+    fx, fy = 490, 430
+    laranja = (212, 98, 26)
+    laranja_claro = (240, 208, 160)
+    laranja_orelha = (232, 160, 112)
+    preto = (26, 26, 26)
+    pygame.draw.rect(surf, laranja, R(fx + 10, fy + 28, 44, 26))
+    pygame.draw.rect(surf, laranja, R(fx + 30, fy + 4, 28, 28))
+    pygame.draw.rect(surf, laranja, R(fx + 32, fy, 10, 12))
+    pygame.draw.rect(surf, laranja, R(fx + 48, fy, 10, 12))
+    pygame.draw.rect(surf, laranja_orelha, R(fx + 34, fy + 2, 6, 8))
+    pygame.draw.rect(surf, laranja_orelha, R(fx + 50, fy + 2, 6, 8))
+    pygame.draw.rect(surf, laranja_claro, R(fx + 32, fy + 16, 22, 14))
+    pygame.draw.rect(surf, preto, R(fx + 34, fy + 12, 6, 5))
+    pygame.draw.rect(surf, preto, R(fx + 48, fy + 12, 6, 5))
+    pygame.draw.rect(surf, (255, 255, 255), R(fx + 36, fy + 13, 2, 2))
+    pygame.draw.rect(surf, (255, 255, 255), R(fx + 50, fy + 13, 2, 2))
+    pygame.draw.rect(surf, preto, R(fx + 52, fy + 22, 4, 4))
+    pygame.draw.rect(surf, laranja_claro, R(fx + 14, fy + 32, 28, 18))
+    pygame.draw.rect(surf, laranja, R(fx, fy + 10, 14, 30))
+    pygame.draw.rect(surf, (245, 245, 245), R(fx, fy + 8, 12, 12))
+    for lx in (12, 26, 40):
+        pygame.draw.rect(surf, laranja, R(fx + lx, fy + 50, 10, 14))
 
     return surf

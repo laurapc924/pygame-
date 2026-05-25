@@ -86,8 +86,10 @@ class MapManager:
         """
         self.current_phase_config = config
         self._rebuild_lanes(config.get("lane_count", DEFAULT_NUM_LANES))
+        # Asfalto sujo só nas fases com clima ruim (chuva/neve).
+        asfalto_sujo = config["decoration"] in ("belgica", "suica", "canada")
         self.textura_asfalto = criar_asfalto_textura_colorida(
-            self.lane_width, HEIGHT, config["asphalt_color"]
+            self.lane_width, HEIGHT, config["asphalt_color"], sujo=asfalto_sujo
         )
         self.gradient_background = pygame.Surface((WIDTH, HEIGHT))
         desenhar_gradiente_vertical(
