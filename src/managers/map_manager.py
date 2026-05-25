@@ -229,6 +229,11 @@ class MapManager:
             )
 
     def _load_car_images(self):
+        """Carrega e escala todas as imagens de carros listadas em CAR_FILES.
+
+        Returns:
+            Lista de Surfaces dos carros já redimensionadas para (50, 92).
+        """
         cars_dir = IMG_DIR / "cars"
         target_size = (50, 92)
         images = []
@@ -294,6 +299,12 @@ class MapManager:
         pygame.draw.rect(screen, (255, 215, 0), self.goal_zone)
 
     def _draw_dashed_line(self, screen, x):
+        """Desenha a linha branca tracejada vertical entre faixas na coluna x.
+
+        Args:
+            screen: Surface destino onde a linha é desenhada.
+            x: Coordenada X em pixels onde traçar a linha.
+        """
         y = 0
         while y < HEIGHT:
             y_end = min(y + DASH_LENGTH, HEIGHT)

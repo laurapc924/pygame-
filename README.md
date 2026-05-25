@@ -1,152 +1,262 @@
-## 🦊 Fox Crossing
+# 🦊 Fox Crossing
 
-### Sobre o projeto
+Um jogo 2D estilo Frogger feito em PyGame onde uma raposa precisa atravessar rodovias em 10 cidades do mundo (da Amazônia até a Itália) desviando de carros, coletando power-ups e usando a habilidade especial **Instinto**
+(slow-motion) para chegar viva à toca dourada no fim do mapa.
 
-Fox Crossing é um jogo 2D desenvolvido em PyGame no qual o jogador controla uma raposa que precisa atravessar faixas movimentadas de carros até chegar à sua toca dourada. A cada fase, o desafio aumenta: os carros ficam mais rápidos, há mais obstáculos na tela e o jogador precisa administrar melhor suas vidas, power-ups e habilidade especial.
+![Status](https://img.shields.io/badge/status-jogo%20completo-brightgreen)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue)
+![PyGame](https://img.shields.io/badge/pygame-2.6-orange)
 
-A narrativa do jogo acompanha a travessia da raposa entre a floresta e a cidade. O objetivo é sobreviver ao caminho urbano, coletar itens especiais e alcançar a zona dourada, que representa a toca segura da raposa.
+## Sumário
 
-Este projeto foi desenvolvido como projeto final da disciplina Design de Software do Insper, em 2026, com foco em orientação a objetos, organização modular, máquina de estados e boas práticas de desenvolvimento de jogos.
+- [Descrição](#descrição)
+- [Como instalar e rodar](#como-instalar-e-rodar)
+- [Como jogar](#como-jogar)
+- [Fases](#fases)
+- [Estrutura do projeto](#estrutura-do-projeto)
+- [Decisões de design](#decisões-de-design)
+- [Uso de IA generativa](#uso-de-ia-generativa)
+- [Créditos](#créditos)
+- [Licença](#licença)
 
-### Autores
+## Descrição
 
-- Andrezza [SOBRENOME]
-- Rodrigo [SOBRENOME]
+Fox Crossing é o projeto final de **Design de Software** do Insper (2026). O jogador controla uma raposa que precisa atravessar 10 fases temáticas ambientadas em diferentes países (Amazônia, Inglaterra, Havaí, Suíça, França,
+África do Sul, Egito, Canadá, Bélgica e Itália). Cada fase tem cenário próprio em pixel art, dificuldade crescente (mais velocidade e densidade de carros) e a transição entre elas mostra a bandeira + nome do país visitado.
 
-### Vídeo demonstrativo
+O projeto foi um exercício de orientação a objetos, organização modular, máquina de estados e boas práticas de desenvolvimento de jogos. Todo o cenário, sprites de raposa, decorações das fases, bandeiras e efeitos climáticos (neve, chuva, faróis, vagalumes, confete) são desenhados
+procedurmente em runtime com `pygame.draw` — não dependemos de assets externos fora dos sprites de carros (Kenney) e dos sons gerados por código.
 
-[PLACEHOLDER: https://youtube.com/SEU_LINK_AQUI]
+### Features
 
-Veja o jogo em ação clicando no link acima.
+- **10 fases temáticas** com cenário, cores e dificuldade próprios.
+- **Máquina de estados** (menu, instruções, jogo, pausa, vitória, game over).
+- **Sistema de vidas, pontuação e recorde persistente** (`data/highscore.txt`).
+- **Power-ups**: cogumelo (+1 vida) e trevo (3s de invencibilidade).
+- **Habilidade Instinto** (slow-motion dos carros, com cooldown).
+- **Efeitos climáticos por fase**: neve (Suíça e Canadá), chuva (Bélgica),
+  faróis dos carros (Inglaterra à noite).
+- **Animações**: raposa caminha em 4 direções com 3 frames; estrelas, confete,
+  vagalumes e bandeiras pulsantes nas telas.
+- **HUD completo**: vidas, pontos, recorde, fase atual e barra do Instinto.
+- **Sons gerados por código** (música de menu/jogo, SFX de colisão/vitória).
+- **Tela de transição entre fases** com bandeira + título do país + subtítulo.
 
-### Como rodar o jogo
+## Como instalar e rodar
 
-Requisitos:
+### Requisitos
 
-- Python 3.10+
-- pygame-ce
+- Python 3.10 ou superior
+- PyGame 2.6+
 
-Passo a passo:
+### Passo a passo
 
 1. Clone o repositório:
    ```bash
-   git clone [URL]
-   ```
-2. Entre na pasta do projeto:
-   ```bash
+   git clone https://github.com/<USUARIO>/fox-crossing.git
    cd fox-crossing
    ```
-3. Instale as dependências:
+2. Instale as dependências:
    ```bash
    pip install -r requirements.txt
    ```
-4. Execute o jogo:
+3. Rode o jogo:
    ```bash
    python main.py
    ```
 
+## Como jogar
+
 ### Controles
 
-| Tecla | Ação |
-| --- | --- |
-| Setas do teclado | Mover a raposa |
-| SHIFT | Ativar Instinto (slow-motion) |
-| P | Pausar |
-| ENTER | Confirmar / Iniciar |
-| I | Ver instruções no menu |
-| ESC | Sair |
-| M | Voltar ao menu em telas de fim/pausa |
+| Tecla              | Ação                                          |
+| ------------------ | --------------------------------------------- |
+| Setas (↑ ↓ ← →)    | Mover a raposa                                |
+| SHIFT              | Ativar Instinto (slow-motion por 2s)          |
+| P                  | Pausar / despausar durante o jogo             |
+| ENTER              | Confirmar / iniciar / voltar ao menu          |
+| I                  | Abrir instruções no menu principal            |
+| M                  | Voltar ao menu (em pausa, fim ou instruções)  |
+| ESC                | Sair do jogo                                  |
 
-### Como jogar
+### Objetivo
 
-O objetivo é atravessar a cidade desviando dos carros e alcançar a toca dourada no fim do mapa. A raposa começa com 3 vidas; ao colidir com um carro, perde uma vida e retorna ao início da fase.
+Atravessar todas as faixas de carros e chegar à **zona dourada** (toca da raposa) no extremo direito da tela. A raposa começa com **3 vidas**; ao colidir, perde uma vida e volta ao começo da fase.
 
-O jogo possui 3 fases com dificuldade progressiva. Ao completar cada travessia, o jogador recebe pontos: 100 na fase 1, 200 na fase 2 e 300 na fase 3. Ao completar as três fases, a tela de vitória é exibida.
+Ao chegar à toca, ganha pontos e avança pra próxima fase. Completar todas as 10 fases dispara a tela de vitória. Perder todas as vidas leva ao Game Over.
 
-Durante a partida, é possível coletar power-ups: o cogumelo vermelho concede +1 vida, enquanto o trevo verde deixa a raposa invencível por 3 segundos. A habilidade especial Instinto, ativada com SHIFT, reduz a velocidade dos carros por 2 segundos e possui cooldown de 10 segundos.
+### Pontuação por fase
 
-### Funcionalidades implementadas
+| # | País                | Subtítulo            | Velocidade | Carros/faixa | Pontos |
+| - | ------------------- | -------------------- | ---------- | ------------ | ------ |
+| 1 | 🇧🇷 AMAZÔNIA        | Floresta             | 110–200    | 2            | 100    |
+| 2 | 🏴󠁧󠁢󠁥󠁮󠁧󠁿 INGLATERRA       | Cidade à noite       | 130–220    | 2            | 150    |
+| 3 | 🌺 HAVAÍ            | Praia                | 150–240    | 2            | 200    |
+| 4 | 🇨🇭 SUÍÇA           | Neve                 | 170–260    | 3            | 250    |
+| 5 | 🇫🇷 FRANÇA          | Montanha             | 180–280    | 3            | 350    |
+| 6 | 🇿🇦 ÁFRICA DO SUL   | Safari               | 200–300    | 3            | 450    |
+| 7 | 🇪🇬 EGITO           | Deserto              | 210–295    | 3            | 600    |
+| 8 | 🇨🇦 CANADÁ          | Bosque               | 225–310    | 3            | 750    |
+| 9 | 🇧🇪 BÉLGICA         | Cidade com chuva     | 240–325    | 3            | 900    |
+| 10| 🇮🇹 ITÁLIA          | Cidade               | 255–345    | 3            | 1200   |
 
-- Menu principal com opções para jogar e acessar instruções.
-- Tela de instruções explicando controles e mecânicas.
-- Sistema de 3 fases com dificuldade crescente.
-- Sistema de vidas, começando com 3 vidas.
-- Colisão com carros, perda de vida e reposicionamento da raposa no início.
-- Zona de chegada, representada pela toca dourada.
-- Tela de Game Over ao perder todas as vidas.
-- Tela de Vitória ao completar as 3 fases.
-- Tela de Pausa acionada pela tecla P.
-- Sistema de pontuação: 100 pontos na fase 1, 200 na fase 2 e 300 na fase 3.
-- Recorde persistente salvo em `data/highscore.txt`.
-- Power-ups: cogumelo vermelho (+1 vida) e trevo verde (invencibilidade por 3 segundos).
-- Habilidade especial Instinto com slow-motion por 2 segundos e cooldown de 10 segundos.
-- Transições suaves de fade entre todas as telas.
-- HUD completo com vidas, pontos, recorde, fase atual e barra do Instinto.
+### Power-ups e habilidade
 
-### Estrutura do projeto
+- **🍄 Cogumelo (vermelho)**: +1 vida.
+- **🍀 Trevo (verde)**: invencibilidade por 3 segundos (raposa pisca).
+- **⚡ Instinto (SHIFT)**: reduz a velocidade dos carros para 30% durante 2s; recarrega em 10s. A barra azul na lateral mostra o estado.
+
+## Fases
+
+Cada fase tem decoração lateral própria (esquerda e direita do mapa) desenhada em pixel art:
+
+| País             | Decoração lateral                            | Efeito especial         |
+| ---------------- | -------------------------------------------- | ----------------------- |
+| Amazônia         | Floresta densa, cipós, flores tropicais      | —                       |
+| Inglaterra       | Big Ben, prédios iluminados, lampião         | Faróis dos carros 💡    |
+| Havaí            | Coqueiros, sol, mar, hibiscos                | —                       |
+| Suíça            | Montanha nevada, chalé, bandeira             | Neve caindo ❄️          |
+| França           | Mont Blanc + teleférico                      | —                       |
+| África do Sul    | Acácias, girafa, elefante, pôr do sol        | —                       |
+| Egito            | Pirâmide, esfinge, dunas, sol forte          | —                       |
+| Canadá           | Pinheiros nevados, folha de bordo, pegadas   | Neve caindo ❄️          |
+| Bélgica          | Casas com gevel, campanário, paralelepípedo  | Chuva diagonal 🌧️       |
+| Itália           | Duomo, prédios racionalistas, vespa          | —                       |
+
+## Vídeo demonstrativo
+
+
+
+## Estrutura do projeto
 
 ```text
 fox-crossing/
-├── main.py
-├── programa.py
+├── main.py                  # Entrypoint
 ├── requirements.txt
 ├── README.md
+├── data/
+│   └── highscore.txt        # Recorde persistente
 ├── assets/
 │   ├── fonts/
 │   ├── img/
-│   └── sounds/
-├── data/
-│   └── highscore.txt
-├── docs/
-│   ├── decisoes_design.md
-│   └── prompts_ia.md
+│   │   ├── fox0..3.png      # Sprite sheets da raposa por direção
+│   │   └── cars/            # Sprites de carros (Kenney)
+│   └── sounds/              # Música de menu/jogo + SFX
 └── src/
-    ├── game.py
-    ├── settings.py
+    ├── game.py              # Loop principal e troca de estados
+    ├── settings.py          # Constantes globais (WIDTH, HEIGHT, cores)
     ├── entities/
-    │   ├── fox.py
-    │   ├── obstacle.py
-    │   └── powerup.py
+    │   ├── fox.py           # Raposa controlável (com animação)
+    │   ├── obstacle.py      # Carros (sprite + movimento + colisão)
+    │   └── powerup.py       # Cogumelo e trevo
     ├── managers/
-    │   ├── level_manager.py
-    │   ├── map_manager.py
-    │   ├── score_manager.py
-    │   ├── sound_manager.py
-    │   └── transition_manager.py
+    │   ├── level_manager.py    # Configurações das 10 fases
+    │   ├── map_manager.py      # Cenário, faixas, obstáculos, efeitos climáticos
+    │   ├── score_manager.py    # Pontuação e recorde persistente
+    │   ├── sound_manager.py    # Música e SFX
+    │   └── transition_manager.py  # Fades entre telas
     ├── states/
-    │   ├── base_state.py
-    │   ├── game_over_state.py
-    │   ├── game_state.py
+    │   ├── base_state.py       # Classe base da máquina de estados
+    │   ├── menu.py             # Tela inicial (cidade pixel-art)
     │   ├── instructions_state.py
-    │   ├── menu.py
+    │   ├── game_state.py       # Gameplay principal
     │   ├── pause_state.py
     │   ├── splash_state.py
-    │   └── victory_state.py
+    │   ├── victory_state.py    # Floresta dia + raposa na toca
+    │   └── game_over_state.py  # Floresta noturna + aurora
     └── utils/
+        ├── fonts.py
+        ├── sprite_factory.py   # Sprites e backgrounds procedurais
+        └── lateral_bars.py     # 20 barras laterais (10 países × 2 lados)
 ```
 
-### Decisões de design
+## Decisões de design
 
-O jogo utiliza uma máquina de estados para separar claramente as telas principais: menu, instruções, jogo, pausa, game over e vitória. Essa escolha evita condicionais espalhadas pelo loop principal e permite que cada tela controle seus próprios eventos, atualização e desenho.
+- **Máquina de estados**: cada tela (menu, instruções, jogo, pausa, vitória,
+  game over) é uma subclasse de `BaseState` com `handle_events`, `update(dt)` e
+  `draw(screen)` próprios. Isso evita uma cadeia gigante de `if`s no loop
+  principal e isola responsabilidades.
+- **Managers separados**: a fase (configs), o mapa (cenário e obstáculos), a
+  pontuação, o som e as transições têm cada um seu manager dedicado. O
+  `GameState` apenas orquestra — não conhece detalhes de pintura ou som.
+- **Tudo em pygame.draw**: o cenário inteiro (céu, montanhas, prédios, árvores,
+  carros, raposa decorativa, bandeiras, efeitos climáticos) é desenhado por
+  código a partir de SVGs de referência. Isso evita dependência de arquivos
+  externos e mantém o repositório leve. O único asset externo são os sprites
+  de carros do Kenney (livres).
+- **Sprite factory + lateral_bars**: para cada elemento gráfico criamos uma
+  função em `sprite_factory.py` ou `lateral_bars.py` (no caso das barras
+  laterais). Isso permite recolorir/redimensionar cada peça pela fase atual.
+- **Curva de dificuldade**: o jogo tem 10 fases com aumento gradual de
+  velocidade. A densidade de carros sobe lentamente (2 → 3 carros/faixa) e o
+  pulo grande pra 3 acontece já na fase 4 pra dar tempo de praticar. O boss
+  (fase 10) é definido pela velocidade máxima (255–345) e não por densidade,
+  pra garantir que sempre haja buracos entre carros.
+- **Efeitos especiais por país**: faróis (Inglaterra), neve (Suíça/Canadá) e
+  chuva (Bélgica) são ativados pelo tema da fase via `decoration` key.
+- **Asfalto sujo só onde tem clima ruim**: na chuva e na neve o asfalto tem
+  manchas e pixels claros (parece molhado/desgastado); nas outras fases o
+  chão fica limpo.
 
-A lógica foi dividida em managers para manter responsabilidade única. O `MapManager` cuida do mapa e dos elementos da fase, o `ScoreManager` centraliza pontuação e recorde, o `LevelManager` controla progressão e dificuldade, e o `TransitionManager` gerencia os fades entre telas. Assim, o `GameState` permanece focado na experiência de gameplay.
+## Uso de IA generativa
 
-Optamos por fases progressivas em vez de uma fase única infinita para criar sensação clara de avanço e conclusão. O jogador percebe que está vencendo etapas, encontra dificuldade crescente e recebe uma tela de vitória ao final, o que torna a experiência mais completa para uma entrega acadêmica.
+Esse projeto foi desenvolvido com auxílio extensivo do **Claude (Anthropic)** —
+todos os prompts foram revisados pelos autores antes do código ser commitado e o entendimento das decisões de arquitetura, da rubrica e do design das fases foi feito pelos membros do grupo.
 
-### Uso de IA generativa
+**Estimativa: ~80% do código foi gerado ou refinado com auxílio de IA**, e
+~20% foi escrito/ajustado manualmente (principalmente integração, balanceamento das fases e ajustes finos de layout).
 
-Utilizamos Claude (Anthropic) durante o desenvolvimento para acelerar a implementação. Cada prompt foi enviado, analisado e o código gerado foi revisado antes de ser commitado.
+Detalhamento por área:
 
-Bugs encontrados foram resolvidos pelos membros do grupo. Os prompts utilizados estão documentados em `docs/prompts_ia.md`.
+| Componente                                | % IA | Observações                                            |
+| ----------------------------------------- | ---- | ------------------------------------------------------ |
+| Máquina de estados + game loop            | 70%  | Estrutura sugerida pela IA, integração feita manualmente |
+| Sprites procedurais (raposa, árvores etc.) | 95%  | Geradas a partir de SVGs de referência via Claude       |
+| 20 barras laterais (`lateral_bars.py`)    | 95%  | Transcritas dos SVGs de referência via Claude           |
+| 10 bandeiras simplificadas                | 100% | Geradas integralmente pela IA                          |
+| Backgrounds (menu, vitória, game over)    | 95%  | A partir de SVGs anexados ao prompt                    |
+| Balanceamento das 10 fases                | 50%  | Várias iterações pelo grupo testando jogabilidade       |
+| Lógica de física dos carros               | 40%  | Boa parte escrita à mão pelos autores                   |
+| Sons gerados por código                   | 100% | Geração via stdlib (`wave` + `math`) sugerida pela IA   |
+| README + docstrings                       | 95%  | Estrutura inicial e refinamentos via IA                 |
 
-Estimativa: aproximadamente 70% do código foi gerado ou sugerido com auxílio de IA, enquanto 30% foi escrito ou modificado manualmente. A estrutura geral, as decisões de arquitetura e o debugging foram conduzidos pelos autores.
+Detalhamento completo das sessões com Claude e da metodologia está em [docs/prompts_ia.md](docs/prompts_ia.md).
 
-### Créditos de assets
+## Créditos
 
-Por enquanto, todos os elementos visuais são placeholders coloridos gerados pelo PyGame.
+### Assets externos
 
-Sprites e sons reais podem ser incorporados em versões futuras. Caso assets externos sejam adicionados, terão crédito apropriado.
+- **🚗 Sprites de carros** — [Kenney Car Kit](https://kenney.nl/assets/car-kit),
+  licença [CC0](https://creativecommons.org/publicdomain/zero/1.0/) (uso
+  livre, inclusive comercial). Arquivos em `assets/img/cars/`.
 
-### Licença
+- **🦊 Sprite sheet da raposa** — desenhada proceduralmente em
+  [tools/generate_fox_sprites.py](tools/generate_fox_sprites.py) usando
+  `pygame.draw`. Gera 4 PNGs (`fox0.png` UP, `fox1.png` RIGHT, `fox2.png` DOWN,
+  `fox3.png` LEFT) com 3 frames de animação cada (48×64 por frame). Rode
+  `python tools/generate_fox_sprites.py` para regenerar. Arte 100% autoral
+  do grupo.
 
-Projeto acadêmico - uso educacional.
+### Geradas internamente
+
+- **🎵 Sons** — música de menu/jogo e efeitos sonoros (colisão, vitória)
+  são gerados em `tools/generate_sounds.py` usando apenas `wave`, `struct` e
+  `math` da stdlib do Python. Roda `python tools/generate_sounds.py` para
+  regenerar.
+
+- **🎨 Cenários e elementos visuais** — todos os backgrounds (menu, instruções,
+  vitória, game over), as 20 barras laterais (10 países × 2 lados), as 10
+  bandeiras, as decorações e a raposa de perfil são desenhados
+  proceduralmente em `pygame.draw` a partir de referências SVG criadas em
+  colaboração com Claude. Código em [src/utils/sprite_factory.py](src/utils/sprite_factory.py)
+  e [src/utils/lateral_bars.py](src/utils/lateral_bars.py).
+
+## Autores
+
+- Andrezza Rutkowski Coelho
+- Camila Frid Buniac
+- Laura Pimentel Cots
+
+## Licença
+
+Projeto acadêmico — uso educacional. Sprites de carros do Kenney sob CC0.

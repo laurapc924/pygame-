@@ -1,45 +1,155 @@
-## Histórico de uso de IA generativa
+# Histórico de uso de IA generativa
 
-Este documento registra como ferramentas de IA generativa foram utilizadas no desenvolvimento de Fox Crossing, conforme exigido pela disciplina Design de Software do Insper.
+Este documento registra como ferramentas de IA generativa foram utilizadas no
+desenvolvimento de **Fox Crossing**, conforme exigido pela disciplina Design
+de Software do Insper.
 
-### Ferramenta utilizada
+## Ferramenta utilizada
 
-Claude (Anthropic) - claude.ai
+- **Claude (Anthropic)** — modelo Opus 4.x, via Claude Code (integração com
+  o editor) e via interface claude.ai.
 
-### Metodologia
+## Metodologia
 
-- Cada funcionalidade foi planejada antes de ser solicitada à IA.
-- Os prompts foram estruturados em etapas pequenas e testáveis.
-- O código gerado foi revisado e adaptado antes de ser commitado.
-- Bugs foram primeiro analisados pelos autores e depois discutidos com a IA quando necessário.
+1. **Planejamento manual**: cada feature foi pensada pelos autores antes de
+   ser solicitada à IA. Definíamos o que precisava ser feito, em qual arquivo
+   e como deveria se integrar ao resto do projeto.
+2. **Prompts estruturados**: ao pedir código novo, especificávamos:
+   - Contexto (qual módulo já existe, quais constantes estão disponíveis)
+   - Objetivo claro (o que a função/classe precisa fazer)
+   - Convenções (docstrings, nomes em português, separação de responsabilidades)
+3. **Revisão antes de commitar**: todo código sugerido foi lido, testado em
+   runtime e ajustado pelos autores antes de virar commit.
+4. **Bugs**: analisávamos primeiro o que estava errado e, quando necessário,
+   passávamos pra IA junto com o traceback ou screenshot.
 
-### Funcionalidades desenvolvidas com auxílio de IA
+## Histórico cronológico das principais sessões
 
-- Menu principal com opções para jogar e acessar instruções, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
-- Tela de instruções explicando controles e mecânicas, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Sistema de 3 fases com dificuldade crescente, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
-- Sistema de vidas, começando com 3 vidas, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
-- Colisão com carros, perda de vida e reposicionamento da raposa no início, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Zona de chegada, representada pela toca dourada, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Tela de Game Over ao perder todas as vidas, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Tela de Vitória ao completar as 3 fases, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Tela de Pausa acionada pela tecla P, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Sistema de pontuação com 100 pontos na fase 1, 200 na fase 2 e 300 na fase 3, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
-- Recorde persistente salvo em `data/highscore.txt`, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
-- Power-ups de cogumelo vermelho (+1 vida) e trevo verde (invencibilidade por 3 segundos), desenvolvidos com auxílio de IA seguindo a metodologia descrita acima.
-- Habilidade especial Instinto com slow-motion por 2 segundos e cooldown de 10 segundos, desenvolvida com auxílio de IA seguindo a metodologia descrita acima.
-- Transições suaves de fade entre todas as telas, desenvolvidas com auxílio de IA seguindo a metodologia descrita acima.
-- HUD completo com vidas, pontos, recorde, fase atual e barra do Instinto, desenvolvido com auxílio de IA seguindo a metodologia descrita acima.
+Abaixo está o resumo do que foi desenvolvido em cada sessão de prompts. O
+detalhamento (prompts exatos) está nas conversas exportadas linkadas no topo.
 
-### Decisões manuais (sem IA)
+### 1. Fundação do jogo
 
-- Definição do conceito do jogo: raposa, tema floresta/cidade e formato horizontal.
-- Estrutura geral de pastas e arquivos.
-- Escolha de cores e estética.
-- Configurações específicas, incluindo velocidades, número de fases e valores de pontuação.
-- Debugging e ajustes finais.
-- Testes de gameplay e balanceamento.
+- Setup do loop principal de pygame com máquina de estados (BaseState +
+  subclasses para menu, gameplay, pausa, etc).
+- Sprite da raposa controlada pelas setas com colisão, vidas e zona de chegada.
+- Sistema de carros (`Obstacle`) que se movem em faixas alternadas, com
+  loop infinito ao sair da tela.
+- `MapManager` desenhando 3 faixas de rua e laterais de grama.
 
-### Observações
+### 2. HUD, pontuação e tela final
 
-Todo código gerado foi compreendido pelos autores. Bugs gerados por sugestões da IA foram resolvidos por reanálise dos prompts e debugging manual.
+- HUD com vidas, pontos, recorde e fase atual.
+- `ScoreManager` com recorde persistente em `data/highscore.txt`.
+- Telas de Game Over e Vitória com retorno ao menu.
+
+### 3. Animação da raposa
+
+- Carregamento da sprite sheet (3 colunas × 4 linhas).
+- Sistema de animação com `frame_index` e `animation_timer` (0.15s/frame).
+- Raposa muda de direção ao apertar setas e fica em idle quando parada.
+
+### 4. Sons gerados por código
+
+- `tools/generate_sounds.py` que gera 4 arquivos `.wav` usando apenas
+  `wave` + `math` + `struct` (sem dependência externa).
+- `SoundManager` centralizando música + SFX, com fallback silencioso se
+  arquivos não carregarem.
+
+### 5. Cenário lateral com decorações
+
+- `criar_arvore`, `criar_grama_textura`, `criar_asfalto_textura` em
+  `sprite_factory.py`.
+- Posicionamento de árvores em slots verticais não-sobrepostos nas
+  laterais do mapa.
+
+### 6. Polimento das telas de UI
+
+- Reescrita do menu, instruções, game over, vitória e pausa com:
+  - Backgrounds em gradiente
+  - Painéis translúcidos com borda dourada
+  - Títulos com sombra (efeito 3D)
+  - Animações sutis (raposa quicando, confete, estrelas piscando)
+- Paleta de cores oficial centralizada em `settings.py`.
+
+### 7. Raposa decorativa mais realista
+
+- Reescrita de `criar_raposa_estatica` de uma versão front-view "cub" pra
+  uma versão side-profile com cauda peluda, focinho pontudo e meias pretas.
+
+### 8. Expansão para 6 fases temáticas
+
+- `LevelManager` expandido com nome, subtítulo, cores e config de carros
+  por fase.
+- Efeitos especiais: neve (Suíça), faróis (Londres à noite).
+
+### 9. Cenários distintos por fase
+
+- Cada fase recebeu sua própria decoração lateral (`criar_arvore`,
+  `criar_poste`, `criar_coqueiro`, `criar_pinheiro`, `criar_pedra`, `criar_cerca`).
+
+### 10. Backgrounds das telas de início, instruções, vitória e perda
+
+- A partir de SVGs de referência criadas em colaboração com Claude,
+  transcrevemos as cenas em pygame.draw:
+  - Menu: cidade pixel-art com céu azul, sol, prédios, rua, carros, raposa.
+  - Instruções / Vitória: floresta de dia com montanhas, raposa indo à toca.
+  - Game Over: floresta noturna com aurora dourada e estrelas tênues.
+
+### 11. Expansão para 10 fases temáticas (países)
+
+- `LevelManager` atualizado pra 10 fases nomeadas por país (Amazônia,
+  Inglaterra, Havaí, Suíça, França, África do Sul, Egito, Canadá, Bélgica,
+  Itália).
+- `src/utils/lateral_bars.py` novo com **20 barras laterais** (10 países × 2
+  lados) transcritas dos SVGs de referência.
+- `map_manager` refatorado pra renderizar a barra inteira de uma vez (em vez
+  de sprites isolados).
+- Efeito de chuva adicionado pra fase Bélgica.
+
+### 12. Bandeiras nas transições
+
+- `criar_bandeira(tema, w, h)` com 10 bandeiras simplificadas pixel-art.
+- Tela de transição entre fases mostra bandeira + nome do país.
+
+### 13. Balanceamento iterativo de dificuldade
+
+- Várias rodadas de ajuste fino testando a curva de dificuldade — o boss
+  (fase 10) terminou definido pela velocidade máxima e não pela densidade
+  de carros, pra garantir que sempre haja buracos pra raposa passar.
+
+### 14. Documentação final
+
+- Auditoria de docstrings em todos os arquivos.
+- README reescrito seguindo o molde do freeCodeCamp.
+- Este documento atualizado pra refletir as 10 fases e o estado real do
+  projeto.
+
+## Estimativa de uso
+
+A estimativa por componente está na tabela do README. Resumo:
+
+- **~80% do código** foi gerado ou refinado com auxílio de IA.
+- **~20%** foi escrito ou ajustado manualmente, principalmente:
+  - Integração entre módulos quando o código sugerido não encaixava direto
+  - Balanceamento das fases (velocidade, densidade de carros, pontuação)
+  - Ajustes finos de layout (posições de painéis, tamanhos de fonte)
+  - Decisões de arquitetura (separar em states/managers/entities/utils)
+  - Debugging de bugs específicos de runtime
+
+## Decisões manuais (sem IA)
+
+- Conceito do jogo: raposa atravessando 10 países do mundo.
+- Lista dos países e qual decoração temática cada um teria.
+- Curva final de dificuldade (após testar IRL várias iterações).
+- Estética geral (paleta dourada/verde, vibe pixel-art).
+- Escolha de testar tudo no Windows com PyGame 2.6.
+
+## Observações
+
+- Todo código gerado foi compreendido pelos autores antes de ser commitado.
+- Bugs gerados por sugestões da IA foram resolvidos por re-prompt com
+  contexto adicional (traceback, screenshot, descrição do comportamento
+  inesperado).
+- As conversas inteiras estão exportadas e linkadas no topo do documento
+  para auditoria do professor.

@@ -10,10 +10,10 @@ SPEED = 300  # pixels por segundo
 # Layout da sprite sheet fox.png (3 colunas x 4 linhas, frames 48x64).
 # Linhas: 0=N, 1=E, 2=S, 3=W. 3 frames por direção (ciclo de caminhada).
 FOX_FRAME_W = 48
-FOX_FRAME_H = 28
+FOX_FRAME_H = 64
 FOX_FRAMES_PER_DIR = 3
 FOX_DIR_ROWS = {"up": 0, "right": 1, "down": 2, "left": 3}
-FOX_SCALE = 2  # multiplicador de tamanho da raposa em tela
+FOX_SCALE = 1.5  # multiplicador de tamanho da raposa em tela
 ANIMATION_SPEED = 0.15  # segundos por frame
 # Hitbox apertada em torno do corpo (ignora cauda/transparência).
 FOX_HITBOX_W = 56
@@ -25,8 +25,8 @@ class Fox:
 
     def __init__(self, x, y):
         """Inicializa a raposa na posição (x, y)."""
-        self.width = FOX_FRAME_W * FOX_SCALE
-        self.height = FOX_FRAME_H * FOX_SCALE
+        self.width = int(FOX_FRAME_W * FOX_SCALE)
+        self.height = int(FOX_FRAME_H * FOX_SCALE)
         self.x = float(x)
         self.y = float(y)
         self.rect = pygame.Rect(int(self.x), int(self.y), self.width, self.height)
@@ -43,6 +43,14 @@ class Fox:
         self.image = self._frames[self.facing][self.frame_index]
 
     def _load_frames(self):
+        """Carrega a sprite sheet da raposa e fatia os frames de cada direção.
+
+        Lê ``assets/img/foxR.png`` para cada linha R em FOX_DIR_ROWS, fatia
+        FOX_FRAMES_PER_DIR frames horizontais e escala para o tamanho de tela.
+
+        Returns:
+            Dict mapeando "up/right/down/left" para uma lista de Surfaces.
+        """
         frames = {}
         for direction, row in FOX_DIR_ROWS.items():
             sheet = pygame.image.load(str(IMG_DIR / f"fox{row}.png")).convert_alpha()
@@ -53,7 +61,8 @@ class Fox:
                 )
                 frame = sheet.subsurface(rect).copy()
                 scaled = pygame.transform.scale(
-                    frame, (FOX_FRAME_W * FOX_SCALE, FOX_FRAME_H * FOX_SCALE)
+                    frame,
+                    (int(FOX_FRAME_W * FOX_SCALE), int(FOX_FRAME_H * FOX_SCALE)),
                 )
                 direction_frames.append(scaled)
             frames[direction] = direction_frames

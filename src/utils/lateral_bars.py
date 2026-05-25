@@ -26,21 +26,25 @@ def _bar_canvas(width, height, design_w=48, design_h=200):
     sy = height / design_h
 
     def R(x, y, w, h):
+        """Retorna um pygame.Rect escalado a partir de coords de design."""
         return pygame.Rect(
             int(x * sx), int(y * sy), max(1, int(w * sx)), max(1, int(h * sy))
         )
 
     def rect_alpha(cor, alpha, x, y, w, h):
+        """Desenha um retângulo semi-transparente no destino."""
         r = R(x, y, w, h)
         s = pygame.Surface((r.w, r.h), pygame.SRCALPHA)
         s.fill((*cor, alpha))
         surf.blit(s, r.topleft)
 
     def poly(cor, pts):
+        """Desenha um polígono opaco com coords em design (escalado)."""
         scaled = [(int(x * sx), int(y * sy)) for (x, y) in pts]
         pygame.draw.polygon(surf, cor, scaled)
 
     def poly_alpha(cor, alpha, pts):
+        """Desenha um polígono semi-transparente com coords em design (escalado)."""
         scaled = [(int(x * sx), int(y * sy)) for (x, y) in pts]
         min_x = min(p[0] for p in scaled)
         min_y = min(p[1] for p in scaled)
@@ -54,6 +58,7 @@ def _bar_canvas(width, height, design_w=48, design_h=200):
         surf.blit(s, (min_x, min_y))
 
     def line_alpha(cor, alpha, x1, y1, x2, y2, w=1):
+        """Desenha uma linha semi-transparente entre dois pontos do design."""
         s = pygame.Surface((width, height), pygame.SRCALPHA)
         pygame.draw.line(
             s, (*cor, alpha),

@@ -92,7 +92,7 @@ class MenuState(BaseState):
             WIDTH // 2, 86, COR_DOURADO, COR_LARANJA, passos=6,
         )
         subtitulo = self.font_subtitulo.render(
-            "A travessia da raposa", True, (0, 0, 0)
+            "Volta ao mundo da raposa", True, (0, 0, 0)
         )
         screen.blit(subtitulo, subtitulo.get_rect(center=(WIDTH // 2, 152)))
 

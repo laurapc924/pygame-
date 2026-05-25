@@ -1,3 +1,5 @@
+"""Obstáculo (carro) que se move por uma faixa da rua e dá Game Over no toque."""
+
 import pygame
 from src.settings import HEIGHT
 
@@ -14,6 +16,15 @@ class Obstacle(pygame.sprite.Sprite):
     speed_multiplier = 1.0
 
     def __init__(self, x, y, speed, direction, image):
+        """Cria o carro em (x, y) com velocidade base, direção e sprite indicados.
+
+        Args:
+            x: Coordenada X inicial do canto superior esquerdo.
+            y: Coordenada Y inicial do canto superior esquerdo.
+            speed: Velocidade base em pixels/segundo.
+            direction: 1 para descer, -1 para subir.
+            image: Surface do sprite do carro (já no tamanho final).
+        """
         super().__init__()
 
         # Os sprites do Kenney apontam para cima por padrão.
@@ -40,6 +51,14 @@ class Obstacle(pygame.sprite.Sprite):
         self.effective_speed = max(50, min(new_speed, self.original_speed))
 
     def update(self, dt):
+        """Move o carro pela sua direção e reposiciona no topo/base quando sai da tela.
+
+        O multiplicador de classe ``speed_multiplier`` é aplicado para suportar
+        efeitos globais como o Instinto (slow-motion) ativado pelo jogador.
+
+        Args:
+            dt: Delta time em segundos desde o último frame.
+        """
         self.rect.y += self.effective_speed * self.direction * dt * Obstacle.speed_multiplier
 
         # Loop infinito: se sair de um lado, reaparece no outro e restaura velocidade original
