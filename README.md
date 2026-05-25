@@ -1,8 +1,6 @@
 # 🦊 Fox Crossing
 
-Um jogo 2D estilo Frogger feito em PyGame onde uma raposa precisa atravessar
-rodovias em 10 cidades do mundo — da Amazônia até a Itália — desviando de
-carros, coletando power-ups e usando a habilidade especial **Instinto**
+Um jogo 2D estilo Frogger feito em PyGame onde uma raposa precisa atravessar rodovias em 10 cidades do mundo (da Amazônia até a Itália) desviando de carros, coletando power-ups e usando a habilidade especial **Instinto**
 (slow-motion) para chegar viva à toca dourada no fim do mapa.
 
 ![Status](https://img.shields.io/badge/status-jogo%20completo-brightgreen)
@@ -23,19 +21,11 @@ carros, coletando power-ups e usando a habilidade especial **Instinto**
 
 ## Descrição
 
-Fox Crossing é o projeto final da disciplina **Design de Software** do Insper
-(2026). O jogador controla uma raposa que precisa atravessar 10 fases temáticas
-ambientadas em diferentes países (Amazônia, Inglaterra, Havaí, Suíça, França,
-África do Sul, Egito, Canadá, Bélgica e Itália). Cada fase tem cenário próprio
-em pixel art, dificuldade crescente (mais velocidade e densidade de carros) e a
-transição entre elas mostra a bandeira + nome do país visitado.
+Fox Crossing é o projeto final de **Design de Software** do Insper (2026). O jogador controla uma raposa que precisa atravessar 10 fases temáticas ambientadas em diferentes países (Amazônia, Inglaterra, Havaí, Suíça, França,
+África do Sul, Egito, Canadá, Bélgica e Itália). Cada fase tem cenário próprio em pixel art, dificuldade crescente (mais velocidade e densidade de carros) e a transição entre elas mostra a bandeira + nome do país visitado.
 
-O projeto foi um exercício de **orientação a objetos, organização modular,
-máquina de estados** e boas práticas de desenvolvimento de jogos. Todo o
-cenário, sprites de raposa, decorações das fases, bandeiras e efeitos
-climáticos (neve, chuva, faróis, vagalumes, confete) são desenhados
-procedurmente em runtime com `pygame.draw` — não dependemos de assets externos
-fora dos sprites de carros (Kenney) e dos sons gerados por código.
+O projeto foi um exercício de orientação a objetos, organização modular, máquina de estados e boas práticas de desenvolvimento de jogos. Todo o cenário, sprites de raposa, decorações das fases, bandeiras e efeitos climáticos (neve, chuva, faróis, vagalumes, confete) são desenhados
+procedurmente em runtime com `pygame.draw` — não dependemos de assets externos fora dos sprites de carros (Kenney) e dos sons gerados por código.
 
 ### Features
 
@@ -91,12 +81,9 @@ fora dos sprites de carros (Kenney) e dos sons gerados por código.
 
 ### Objetivo
 
-Atravessar todas as faixas de carros e chegar à **zona dourada** (toca da
-raposa) no extremo direito da tela. A raposa começa com **3 vidas**; ao
-colidir, perde uma vida e volta ao começo da fase.
+Atravessar todas as faixas de carros e chegar à **zona dourada** (toca da raposa) no extremo direito da tela. A raposa começa com **3 vidas**; ao colidir, perde uma vida e volta ao começo da fase.
 
-Ao chegar à toca, ganha pontos e avança pra próxima fase. Completar todas as
-10 fases dispara a tela de vitória. Perder todas as vidas leva ao Game Over.
+Ao chegar à toca, ganha pontos e avança pra próxima fase. Completar todas as 10 fases dispara a tela de vitória. Perder todas as vidas leva ao Game Over.
 
 ### Pontuação por fase
 
@@ -117,13 +104,11 @@ Ao chegar à toca, ganha pontos e avança pra próxima fase. Completar todas as
 
 - **🍄 Cogumelo (vermelho)**: +1 vida.
 - **🍀 Trevo (verde)**: invencibilidade por 3 segundos (raposa pisca).
-- **⚡ Instinto (SHIFT)**: reduz a velocidade dos carros para 30% durante 2s;
-  recarrega em 10s. A barra azul na lateral mostra o estado.
+- **⚡ Instinto (SHIFT)**: reduz a velocidade dos carros para 30% durante 2s; recarrega em 10s. A barra azul na lateral mostra o estado.
 
 ## Fases
 
-Cada fase tem decoração lateral própria (esquerda e direita do mapa) desenhada
-em pixel art:
+Cada fase tem decoração lateral própria (esquerda e direita do mapa) desenhada em pixel art:
 
 | País             | Decoração lateral                            | Efeito especial         |
 | ---------------- | -------------------------------------------- | ----------------------- |
@@ -137,6 +122,10 @@ em pixel art:
 | Canadá           | Pinheiros nevados, folha de bordo, pegadas   | Neve caindo ❄️          |
 | Bélgica          | Casas com gevel, campanário, paralelepípedo  | Chuva diagonal 🌧️       |
 | Itália           | Duomo, prédios racionalistas, vespa          | —                       |
+
+## Vídeo demonstrativo
+
+
 
 ## Estrutura do projeto
 
@@ -212,13 +201,10 @@ fox-crossing/
 ## Uso de IA generativa
 
 Esse projeto foi desenvolvido com auxílio extensivo do **Claude (Anthropic)** —
-todos os prompts foram revisados pelos autores antes do código ser commitado e
-o entendimento das decisões de arquitetura, da rubrica e do design das fases
-foi feito pelos membros do grupo.
+todos os prompts foram revisados pelos autores antes do código ser commitado e o entendimento das decisões de arquitetura, da rubrica e do design das fases foi feito pelos membros do grupo.
 
 **Estimativa: ~80% do código foi gerado ou refinado com auxílio de IA**, e
-~20% foi escrito/ajustado manualmente (principalmente integração, balanceamento
-das fases e ajustes finos de layout).
+~20% foi escrito/ajustado manualmente (principalmente integração, balanceamento das fases e ajustes finos de layout).
 
 Detalhamento por área:
 
@@ -234,8 +220,7 @@ Detalhamento por área:
 | Sons gerados por código                   | 100% | Geração via stdlib (`wave` + `math`) sugerida pela IA   |
 | README + docstrings                       | 95%  | Estrutura inicial e refinamentos via IA                 |
 
-Detalhamento completo das sessões com Claude e da metodologia está em
-[docs/prompts_ia.md](docs/prompts_ia.md).
+Detalhamento completo das sessões com Claude e da metodologia está em [docs/prompts_ia.md](docs/prompts_ia.md).
 
 ## Créditos
 
@@ -268,8 +253,9 @@ Detalhamento completo das sessões com Claude e da metodologia está em
 
 ## Autores
 
-- Andrezza
-- Rodrigo
+- Andrezza Rutkowski Coelho
+- Camila Frid Buniac
+- Laura Pimentel Cots
 
 ## Licença
 
