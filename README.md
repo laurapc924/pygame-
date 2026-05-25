@@ -127,7 +127,7 @@ Cada fase tem decoração lateral própria (esquerda e direita do mapa) desenhad
 https://youtu.be/X_s-Kijec1g
 
 
-## Estrutura do projeto
+## Estrutura do projeto 
 
 ```text
 fox-crossing/
