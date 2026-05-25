@@ -7,17 +7,16 @@ from src.settings import (
     COR_TEXTO,
     COR_TEXTO_SEC,
     COR_VERDE_CLARO,
-    COR_VERDE_ESCURO,
-    COR_VERDE_MEDIO,
     HEIGHT,
     WIDTH,
 )
 from src.states.base_state import BaseState
+from src.utils.fonts import get_font
 from src.utils.sprite_factory import (
+    criar_background_floresta_dia,
     criar_cogumelo,
     criar_raposa_estatica,
     criar_trevo,
-    desenhar_gradiente_vertical,
     desenhar_painel,
     desenhar_titulo_estilizado,
 )
@@ -34,17 +33,31 @@ class InstructionsState(BaseState):
     def __init__(self, game):
         """Inicializa fontes, background, nuvens animadas e ícones decorativos."""
         super().__init__(game)
-        self.font_titulo = pygame.font.SysFont(None, 64, bold=True)
-        self.font_secao = pygame.font.SysFont(None, 34)
-        self.font_texto = pygame.font.SysFont(None, 26)
-        self.font_rodape = pygame.font.SysFont(None, 22)
+        self.font_titulo = get_font(58, bold=True)
+        self.font_secao = get_font(26, bold=True)
+        self.font_texto = get_font(21)
+        self.font_tecla = get_font(18, bold=True)
+        self.font_rodape = get_font(19)
 
-        self.background = pygame.Surface((WIDTH, HEIGHT))
-        desenhar_gradiente_vertical(self.background, COR_VERDE_ESCURO, COR_VERDE_MEDIO)
+        self.background = criar_background_floresta_dia(WIDTH, HEIGHT)
 
         self.icone_cogumelo = criar_cogumelo(30)
         self.icone_trevo = criar_trevo(30)
         self.raposa = criar_raposa_estatica(70, 70)
+
+    def _desenhar_tecla(self, screen, rect, texto):
+        """Desenha uma tecla em formato de chip dentro das instrucoes."""
+        pygame.draw.rect(screen, (18, 28, 24, 220), rect, border_radius=9)
+        pygame.draw.rect(screen, COR_DOURADO, rect, 1, border_radius=9)
+        surf = self.font_tecla.render(texto, True, COR_DOURADO)
+        screen.blit(surf, surf.get_rect(center=rect.center))
+
+    def _desenhar_linha_controle(self, screen, x, y, tecla, texto):
+        """Desenha uma linha de controle com tecla separada da descricao."""
+        tecla_rect = pygame.Rect(x, y, 72, 30)
+        self._desenhar_tecla(screen, tecla_rect, tecla)
+        texto_surf = self.font_texto.render(texto, True, COR_TEXTO)
+        screen.blit(texto_surf, texto_surf.get_rect(midleft=(x + 88, y + 15)))
 
     def handle_events(self):
         """Processa eventos: M ou ESC voltam ao menu."""
@@ -80,6 +93,17 @@ class InstructionsState(BaseState):
             screen.blit(
                 linha_surf, linha_surf.get_rect(center=(centro_x, py + 86 + i * 38))
             )
+
+    def _desenhar_controles(self, screen, px, py):
+        """Desenha controles com chips de tecla para melhorar a leitura."""
+        desenhar_painel(screen, px, py, PAINEL_W, PAINEL_H)
+        titulo_surf = self.font_secao.render("CONTROLES", True, COR_VERDE_CLARO)
+        screen.blit(
+            titulo_surf, titulo_surf.get_rect(center=(px + PAINEL_W // 2, py + 34))
+        )
+        self._desenhar_linha_controle(screen, px + 48, py + 70, "SETAS", "Mover")
+        self._desenhar_linha_controle(screen, px + 48, py + 112, "SHIFT", "Instinto")
+        self._desenhar_linha_controle(screen, px + 48, py + 154, "P", "Pausar")
 
     def _desenhar_itens(self, screen, px, py):
         """Desenha o painel 'ITENS ESPECIAIS' com os ícones de cogumelo e trevo.
@@ -128,17 +152,7 @@ class InstructionsState(BaseState):
                 "e chegar na zona dourada (a toca).",
             ],
         )
-        self._desenhar_secao(
-            screen,
-            x_dir,
-            y_cima,
-            "CONTROLES",
-            [
-                "Setas do teclado: mover a raposa",
-                "SHIFT: ativar habilidade Instinto",
-                "P: pausar o jogo",
-            ],
-        )
+        self._desenhar_controles(screen, x_dir, y_cima)
         self._desenhar_itens(screen, x_esq, y_baixo)
         self._desenhar_secao(
             screen,
@@ -156,7 +170,7 @@ class InstructionsState(BaseState):
         rodape_y = HEIGHT - 60
         desenhar_painel(screen, rodape_x, rodape_y, rodape_w, rodape_h)
         rodape_surf = self.font_rodape.render(
-            "Pressione M ou ESC para voltar ao menu", True, COR_TEXTO_SEC
+            "M ou ESC para voltar ao menu", True, COR_TEXTO_SEC
         )
         screen.blit(
             rodape_surf,

@@ -1,4 +1,4 @@
-"""Gerenciador do mapa: floresta nas laterais e 3 faixas de rua verticais."""
+"""Gerenciador do mapa: laterais temáticas e faixas de rua verticais."""
 
 import pygame
 import random
@@ -6,6 +6,7 @@ import random
 from src.entities.obstacle import Obstacle
 from src.entities.powerup import PowerUp
 from src.settings import HEIGHT, IMG_DIR, WHITE, WIDTH
+from src.utils.lateral_bars import criar_lateral
 from src.utils.sprite_factory import (
     criar_ameia,
     criar_arvore,
@@ -26,9 +27,8 @@ from src.utils.sprite_factory import (
 
 
 SIDE_STRIP_WIDTH = 120
-NUM_LANES = 3
+DEFAULT_NUM_LANES = 4
 ROAD_AREA_WIDTH = WIDTH - 2 * SIDE_STRIP_WIDTH
-LANE_WIDTH = ROAD_AREA_WIDTH // NUM_LANES
 
 DASH_LENGTH = 20
 DASH_GAP = 15
@@ -67,36 +67,42 @@ class MapManager:
 
     def __init__(self):
         """Inicializa as faixas laterais de floresta, as faixas de rua e a zona de chegada."""
+        self.num_lanes = DEFAULT_NUM_LANES
+        self.lane_width = ROAD_AREA_WIDTH // self.num_lanes
         self.left_strip = pygame.Rect(0, 0, SIDE_STRIP_WIDTH, HEIGHT)
-        right_strip_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
-        self.right_strip = pygame.Rect(
-            right_strip_x, 0, WIDTH - right_strip_x, HEIGHT
-        )
-        self.lanes = [
-            pygame.Rect(
-                SIDE_STRIP_WIDTH + i * LANE_WIDTH, 0, LANE_WIDTH, HEIGHT
-            )
-            for i in range(NUM_LANES)
-        ]
+        self._rebuild_lanes(self.num_lanes)
         self.goal_zone = pygame.Rect(WIDTH - 80, 0, 60, HEIGHT)
         self.car_images = self._load_car_images()
 
-        # Texturas de fundo geradas UMA vez (otimização: nunca no draw).
-        self.textura_grama_esquerda = criar_grama_textura(SIDE_STRIP_WIDTH, HEIGHT)
-        self.textura_grama_direita = criar_grama_textura(
-            WIDTH - (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH), HEIGHT
-        )
-        self.textura_asfalto = criar_asfalto_textura(LANE_WIDTH, HEIGHT)
+        # Textura padrão do asfalto (cor sobrescrita por set_phase_config).
+        self.textura_asfalto = criar_asfalto_textura(self.lane_width, HEIGHT)
 
-        # Decorações laterais — definidas por fase via set_phase_config.
-        self.decoracoes = []
+        # Barras laterais inteiras (cenário por país) — setadas por set_phase_config.
+        self.lateral_esquerda = None
+        self.lateral_direita = None
 
         # Configuração visual da fase atual (definida via set_phase_config).
         self.current_phase_config = None
         self.gradient_background = None
         self.snow_particles = []
-        # Brilho de farol pré-renderizado, usado na fase NOITE FINAL.
+        self.rain_particles = []
+        # Brilho de farol pré-renderizado, usado na fase LONDRES (noite).
         self._headlight_glow = self._criar_headlight_glow()
+
+    def _rebuild_lanes(self, lane_count):
+        """Recalcula faixas e lateral direita quando a fase muda a quantidade de faixas."""
+        self.num_lanes = lane_count
+        self.lane_width = ROAD_AREA_WIDTH // self.num_lanes
+        right_strip_x = SIDE_STRIP_WIDTH + self.num_lanes * self.lane_width
+        self.right_strip = pygame.Rect(
+            right_strip_x, 0, WIDTH - right_strip_x, HEIGHT
+        )
+        self.lanes = [
+            pygame.Rect(
+                SIDE_STRIP_WIDTH + i * self.lane_width, 0, self.lane_width, HEIGHT
+            )
+            for i in range(self.num_lanes)
+        ]
 
     def set_phase_config(self, config):
         """Atualiza cores e visuais conforme a fase atual.
@@ -108,15 +114,11 @@ class MapManager:
             config: Dicionário de configuração da fase (vindo do LevelManager).
         """
         self.current_phase_config = config
-        largura_direita = WIDTH - (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH)
-        self.textura_grama_esquerda = criar_grama_textura_colorida(
-            SIDE_STRIP_WIDTH, HEIGHT, config["grass_color"]
-        )
-        self.textura_grama_direita = criar_grama_textura_colorida(
-            largura_direita, HEIGHT, config["grass_color"]
-        )
+        self._rebuild_lanes(config.get("lane_count", DEFAULT_NUM_LANES))
+        # Asfalto sujo só nas fases com clima ruim (chuva/neve).
+        asfalto_sujo = config["decoration"] in ("belgica", "suica", "canada")
         self.textura_asfalto = criar_asfalto_textura_colorida(
-            LANE_WIDTH, HEIGHT, config["asphalt_color"]
+            self.lane_width, HEIGHT, config["asphalt_color"], sujo=asfalto_sujo
         )
         self.gradient_background = pygame.Surface((WIDTH, HEIGHT))
         desenhar_gradiente_vertical(
@@ -125,15 +127,23 @@ class MapManager:
             config["bg_color_bottom"],
         )
         self.snow_particles = []
-        self.decoracoes = self._posicionar_decoracoes(config["decoration"])
+        self.rain_particles = []
+        # Barras laterais temáticas inteiras (substituem grama + decoração).
+        self.lateral_esquerda = criar_lateral(
+            config["decoration"], "esq", SIDE_STRIP_WIDTH, HEIGHT
+        )
+        self.lateral_direita = criar_lateral(
+            config["decoration"], "dir", self.right_strip.width, HEIGHT
+        )
 
     def update(self, dt):
-        """Atualiza os efeitos visuais da fase (partículas de neve na fase NEVE).
+        """Atualiza efeitos visuais: neve em Suíça/Canadá, chuva na Bélgica.
 
         Args:
             dt: Delta time em segundos.
         """
-        if self.current_phase_config and self.current_phase_config["name"] == "NEVE":
+        tema = self.current_phase_config["decoration"] if self.current_phase_config else None
+        if tema in ("suica", "canada"):
             if not self.snow_particles:
                 self.snow_particles = [
                     {
@@ -143,13 +153,32 @@ class MapManager:
                     }
                     for _ in range(50)
                 ]
-            for particula in self.snow_particles:
-                particula["y"] += particula["speed"] * dt
-                if particula["y"] > HEIGHT:
-                    particula["y"] = random.randint(-20, 0)
-                    particula["x"] = random.randint(0, WIDTH)
+            for p in self.snow_particles:
+                p["y"] += p["speed"] * dt
+                if p["y"] > HEIGHT:
+                    p["y"] = random.randint(-20, 0)
+                    p["x"] = random.randint(0, WIDTH)
         else:
             self.snow_particles = []
+
+        if tema == "belgica":
+            if not self.rain_particles:
+                self.rain_particles = [
+                    {
+                        "x": random.randint(0, WIDTH),
+                        "y": random.randint(0, HEIGHT),
+                        "speed": random.randint(420, 600),
+                    }
+                    for _ in range(80)
+                ]
+            for p in self.rain_particles:
+                p["y"] += p["speed"] * dt
+                p["x"] -= 60 * dt
+                if p["y"] > HEIGHT or p["x"] < -10:
+                    p["y"] = random.randint(-40, -5)
+                    p["x"] = random.randint(0, WIDTH + 40)
+        else:
+            self.rain_particles = []
 
     def _criar_headlight_glow(self):
         """Cria a Surface do brilho de farol (círculo amarelado semi-transparente).
@@ -163,21 +192,28 @@ class MapManager:
         return glow
 
     def _draw_snow(self, screen):
-        """Desenha as partículas de neve caindo (fase NEVE).
+        """Desenha as partículas de neve caindo (fases Suíça/Canadá).
 
         Args:
             screen: Surface destino.
         """
-        for particula in self.snow_particles:
+        for p in self.snow_particles:
             pygame.draw.circle(
-                screen,
-                (255, 255, 255),
-                (int(particula["x"]), int(particula["y"])),
-                2,
+                screen, (255, 255, 255), (int(p["x"]), int(p["y"])), 2
             )
 
+    def _draw_rain(self, screen):
+        """Desenha gotas de chuva diagonais (fase Bélgica).
+
+        Args:
+            screen: Surface destino.
+        """
+        for p in self.rain_particles:
+            x, y = int(p["x"]), int(p["y"])
+            pygame.draw.line(screen, (170, 196, 220), (x, y), (x - 3, y + 12), 1)
+
     def _draw_headlights(self, screen):
-        """Desenha o brilho dos faróis à frente de cada carro (fase NOITE FINAL).
+        """Desenha o brilho dos faróis à frente de cada carro (fase RUA DE NOITE).
 
         Args:
             screen: Surface destino.
@@ -191,46 +227,6 @@ class MapManager:
             screen.blit(
                 self._headlight_glow, (carro.rect.centerx - raio, cone_y - raio)
             )
-
-    def _posicionar_decoracoes(self, tipo):
-        """Posiciona as decorações laterais da fase em slots fixos, sem sobreposição.
-
-        Cada decoração ocupa uma coluna e uma fatia vertical exclusivas, então
-        duas nunca se sobrepõem — só há jitter aleatório dentro do slot. O sprite
-        usado depende do tema da fase (árvore, poste, coqueiro, etc.).
-
-        Args:
-            tipo: Identificador do sprite decorativo do tema da fase.
-
-        Returns:
-            Lista de tuplas (Surface, x, y) prontas para desenhar.
-        """
-        fabrica = DECORACOES.get(tipo, criar_arvore)
-        sprite = fabrica(DECOR_W, DECOR_H)
-        decoracoes = []
-
-        # Faixa esquerda: 8 decorações em 2 colunas x 4 linhas.
-        colunas_esq = [0, SIDE_STRIP_WIDTH // 2]
-        linhas_esq = 4
-        slot_h_esq = HEIGHT // linhas_esq
-        jitter_x_esq = max(0, SIDE_STRIP_WIDTH // 2 - DECOR_W)
-        for indice in range(8):
-            x_base = colunas_esq[indice % 2]
-            linha = indice // 2
-            x = x_base + random.randint(0, jitter_x_esq)
-            y = linha * slot_h_esq + random.randint(0, max(0, slot_h_esq - DECOR_H))
-            decoracoes.append((sprite, x, y))
-
-        # Faixa direita: 6 decorações empilhadas em 1 coluna x 6 linhas.
-        # Faixa estreita; ficam no início da faixa, sem cobrir a goal_zone.
-        direita_x = SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH
-        linhas_dir = 6
-        slot_h_dir = HEIGHT // linhas_dir
-        for linha in range(linhas_dir):
-            y = linha * slot_h_dir + random.randint(0, max(0, slot_h_dir - DECOR_H))
-            decoracoes.append((sprite, direita_x, y))
-
-        return decoracoes
 
     def _load_car_images(self):
         cars_dir = IMG_DIR / "cars"
@@ -250,13 +246,15 @@ class MapManager:
         for indice_faixa, lane in enumerate(lanes):
             # Alterna direção: faixa 0 desce, faixa 1 sobe, faixa 2 desce
             direcao = 1 if indice_faixa % 2 == 0 else -1
+            # Desloca cada faixa no eixo Y para evitar paredes de carros alinhados.
+            offset_faixa = (indice_faixa * espacamento // len(lanes)) % espacamento
 
             for i in range(cars_per_lane):
                 velocidade = random.randint(speed_min, speed_max)
                 imagem = random.choice(self.car_images)
                 largura_carro = imagem.get_width()
                 x = lane - largura_carro // 2
-                y = i * espacamento
+                y = (i * espacamento + offset_faixa + espacamento // 4) % HEIGHT
                 carro = Obstacle(x, y, velocidade, direcao, imagem)
                 carro.lane_id = indice_faixa
                 self.obstacles.add(carro)
@@ -276,27 +274,23 @@ class MapManager:
         self.powerups.draw(screen)
 
     def draw(self, screen):
-        """Desenha gradiente de fundo, texturas, árvores, tracejado, neve e zona de chegada."""
-        # Gradiente de fundo da fase (atrás de tudo).
+        """Desenha gradiente, barras laterais temáticas, asfalto, tracejado e efeitos."""
         if self.gradient_background is not None:
             screen.blit(self.gradient_background, (0, 0))
-        # Texturas de grama nas faixas verdes laterais.
-        screen.blit(self.textura_grama_esquerda, (0, 0))
-        screen.blit(
-            self.textura_grama_direita,
-            (SIDE_STRIP_WIDTH + NUM_LANES * LANE_WIDTH, 0),
-        )
-        # Textura de asfalto em cada faixa de rua (self.lanes guarda Rects).
+        # Barras laterais inteiras (cenário por país).
+        if self.lateral_esquerda is not None:
+            screen.blit(self.lateral_esquerda, (0, 0))
+        if self.lateral_direita is not None:
+            screen.blit(self.lateral_direita, (self.right_strip.x, 0))
+        # Textura de asfalto em cada faixa de rua.
         for lane in self.lanes:
             screen.blit(self.textura_asfalto, (lane.x, 0))
-        # Decorações laterais, desenhadas sobre a grama e antes do tracejado.
-        for sprite, x, y in self.decoracoes:
-            screen.blit(sprite, (x, y))
-        for i in range(1, NUM_LANES):
-            x = SIDE_STRIP_WIDTH + i * LANE_WIDTH
+        for i in range(1, self.num_lanes):
+            x = SIDE_STRIP_WIDTH + i * self.lane_width
             self._draw_dashed_line(screen, x)
-        # Neve cai por cima do cenário, antes da zona de chegada.
+        # Efeitos climáticos por cima do cenário, antes da zona dourada.
         self._draw_snow(screen)
+        self._draw_rain(screen)
         pygame.draw.rect(screen, (255, 215, 0), self.goal_zone)
 
     def _draw_dashed_line(self, screen, x):
@@ -342,11 +336,11 @@ class MapManager:
         self.prevent_overlap()
 
     def draw_obstacles(self, screen):
-        """Desenha os carros e, na fase RUA DE NOITE, os faróis iluminando à frente."""
+        """Desenha os carros e, na fase LONDRES (noite), os faróis iluminando à frente."""
         self.obstacles.draw(screen)
         if (
             self.current_phase_config
-            and self.current_phase_config["name"] == "RUA DE NOITE"
+            and self.current_phase_config["decoration"] == "londres"
         ):
             self._draw_headlights(screen)
 

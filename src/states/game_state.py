@@ -12,6 +12,8 @@ from src.states.base_state import BaseState
 from src.states.game_over_state import GameOverState
 from src.states.pause_state import PauseState
 from src.states.victory_state import VictoryState
+from src.utils.fonts import get_font
+from src.utils.sprite_factory import criar_bandeira
 
 
 class GameState(BaseState):
@@ -33,10 +35,12 @@ class GameState(BaseState):
         fox_x = 30
         fox_y = HEIGHT // 2 - 20
         self.fox = Fox(fox_x, fox_y)
-        self.font_hud = pygame.font.SysFont(None, 22)
-        self.font_transition = pygame.font.SysFont(None, 100)
-        self.font_phase_name = pygame.font.SysFont(None, 60)
-        self.font_phase_subtitle = pygame.font.SysFont(None, 28)
+        self.font_hud_label = get_font(13, bold=True)
+        self.font_hud_value = get_font(20, bold=True)
+        self.font_hud_small = get_font(15)
+        self.font_transition = get_font(92, bold=True)
+        self.font_phase_name = get_font(54, bold=True)
+        self.font_phase_subtitle = get_font(26)
         self.score_manager = ScoreManager()
         self.is_transitioning = False
         self.transition_timer = 0
@@ -44,6 +48,7 @@ class GameState(BaseState):
         self.transition_message = ""
         self.transition_phase_name = ""
         self.transition_phase_subtitle = ""
+        self.transition_flag = None
         self.invincible = False
         self.invincible_timer = 0.0
         self.invincible_duration = 3.0
@@ -54,8 +59,92 @@ class GameState(BaseState):
         self.instinct_duration = 2.0
         self.instinct_cooldown = 0.0
         self.instinct_cooldown_max = 10.0
-        self.font_instinct = pygame.font.SysFont(None, 48)
+        self.font_instinct = get_font(44, bold=True)
         self.game.sound_manager.play_music("assets/sounds/game.wav")
+
+    def _draw_text_with_shadow(self, screen, font, text, pos, color, shadow=(0, 0, 0)):
+        """Desenha texto com sombra curta para melhorar leitura sobre o mapa."""
+        x, y = pos
+        sombra = font.render(text, True, shadow)
+        screen.blit(sombra, (x + 1, y + 1))
+        surf = font.render(text, True, color)
+        screen.blit(surf, (x, y))
+
+    def _draw_hud_chip(self, screen, x, y, w, label, value, color):
+        """Desenha um bloco compacto do HUD com label pequeno e valor destacado."""
+        chip = pygame.Surface((w, 48), pygame.SRCALPHA)
+        pygame.draw.rect(chip, (16, 24, 22, 190), (0, 0, w, 48), border_radius=12)
+        pygame.draw.rect(chip, color, (0, 0, 5, 48), border_radius=12)
+        pygame.draw.rect(chip, (255, 255, 255, 28), (0, 0, w, 48), 1, border_radius=12)
+        screen.blit(chip, (x, y))
+        self._draw_text_with_shadow(
+            screen, self.font_hud_label, label.upper(), (x + 14, y + 7), (205, 218, 205)
+        )
+        self._draw_text_with_shadow(
+            screen, self.font_hud_value, str(value), (x + 14, y + 23), color
+        )
+
+    def _draw_hud(self, screen):
+        """Desenha pontos, vidas, fase e Instinto em um painel mais legivel."""
+        painel_x, painel_y = 10, 10
+        painel_w, painel_h = 186, 252
+        painel = pygame.Surface((painel_w, painel_h), pygame.SRCALPHA)
+        pygame.draw.rect(
+            painel, (9, 18, 17, 150), (0, 0, painel_w, painel_h), border_radius=16
+        )
+        pygame.draw.rect(
+            painel, (255, 255, 255, 34), (0, 0, painel_w, painel_h), 1, border_radius=16
+        )
+        screen.blit(painel, (painel_x, painel_y))
+
+        self._draw_hud_chip(screen, 20, 20, 76, "Vidas", self.fox.lives, (255, 115, 86))
+        self._draw_hud_chip(
+            screen, 104, 20, 82, "Fase",
+            f"{self.level_manager.current_level}/{self.level_manager.TOTAL_LEVELS}",
+            (255, 215, 90),
+        )
+        self._draw_hud_chip(
+            screen, 20, 78, 166, "Pontos", self.score_manager.current_score, (120, 225, 150)
+        )
+        self._draw_hud_chip(
+            screen, 20, 136, 166, "Recorde", self.score_manager.highscore, (130, 205, 255)
+        )
+
+        barra_x, barra_y = 20, 206
+        barra_largura, barra_altura = 166, 12
+        label = self.font_hud_small.render("Instinto", True, (230, 235, 225))
+        screen.blit(label, (barra_x, barra_y - 21))
+        pygame.draw.rect(
+            screen, (24, 34, 32), (barra_x, barra_y, barra_largura, barra_altura),
+            border_radius=6,
+        )
+        if self.instinct_active:
+            fill_ratio = self.instinct_timer / self.instinct_duration
+            cor = (70, 220, 235)
+        elif self.instinct_cooldown > 0:
+            fill_ratio = 1.0 - (self.instinct_cooldown / self.instinct_cooldown_max)
+            cor = (235, 155, 62)
+        else:
+            fill_ratio = 1.0
+            cor = (95, 220, 125)
+        pygame.draw.rect(
+            screen, cor,
+            (barra_x, barra_y, int(barra_largura * fill_ratio), barra_altura),
+            border_radius=6,
+        )
+        pygame.draw.rect(
+            screen, (255, 255, 255, 45),
+            (barra_x, barra_y, barra_largura, barra_altura), 1, border_radius=6,
+        )
+
+        if self.invincible:
+            inv_rect = pygame.Rect(20, 222, 166, 22)
+            pygame.draw.rect(screen, (80, 180, 95, 48), inv_rect, border_radius=8)
+            pygame.draw.rect(screen, (135, 255, 150, 95), inv_rect, 1, border_radius=8)
+            inv = self.font_hud_small.render(
+                f"Invencivel {self.invincible_timer:.1f}s", True, (135, 255, 150)
+            )
+            screen.blit(inv, inv.get_rect(center=inv_rect.center))
 
     def handle_events(self):
         """Processa teclado: ESC encerra, SHIFT ativa Instinto, demais eventos vão para a raposa."""
@@ -129,6 +218,7 @@ class GameState(BaseState):
         self.transition_message = f"FASE {self.level_manager.current_level}"
         self.transition_phase_name = nova_config["name"]
         self.transition_phase_subtitle = nova_config["subtitle"]
+        self.transition_flag = criar_bandeira(nova_config["decoration"], 54, 36)
         self.is_transitioning = True
         self.transition_timer = 0
 
@@ -183,38 +273,7 @@ class GameState(BaseState):
         self.map_manager.draw_powerups(screen)
         if self.fox_visible:
             self.fox.draw(screen)
-        hud_vidas = self.font_hud.render(f"Vidas: {self.fox.lives}", True, (255, 255, 255))
-        screen.blit(hud_vidas, (10, 10))
-        hud_pontos = self.font_hud.render(f"Pontos: {self.score_manager.current_score}", True, (255, 255, 255))
-        screen.blit(hud_pontos, (10, 34))
-        hud_recorde = self.font_hud.render(f"Recorde: {self.score_manager.highscore}", True, (255, 255, 255))
-        screen.blit(hud_recorde, (10, 58))
-        hud_fase = self.font_hud.render(
-            f"Fase: {self.level_manager.current_level}/{self.level_manager.TOTAL_LEVELS}",
-            True, (255, 255, 255),
-        )
-        screen.blit(hud_fase, (10, 82))
-        if self.invincible:
-            hud_inv = self.font_hud.render(
-                f"Inv: {self.invincible_timer:.1f}s", True, (100, 255, 100)
-            )
-            screen.blit(hud_inv, (10, 106))
-
-        barra_x, barra_y = 10, 152
-        barra_largura, barra_altura = 100, 14
-        texto_label = self.font_hud.render("Instinto", True, (255, 255, 255))
-        screen.blit(texto_label, (barra_x, barra_y - 22))
-        pygame.draw.rect(screen, (60, 60, 60), (barra_x, barra_y, barra_largura, barra_altura))
-        if self.instinct_active:
-            fill_ratio = self.instinct_timer / self.instinct_duration
-            cor = (50, 200, 220)
-        elif self.instinct_cooldown > 0:
-            fill_ratio = 1.0 - (self.instinct_cooldown / self.instinct_cooldown_max)
-            cor = (220, 130, 30)
-        else:
-            fill_ratio = 1.0
-            cor = (50, 200, 50)
-        pygame.draw.rect(screen, cor, (barra_x, barra_y, int(barra_largura * fill_ratio), barra_altura))
+        self._draw_hud(screen)
 
         if self.instinct_active:
             texto_ativo = self.font_instinct.render("INSTINTO ATIVO", True, (50, 200, 220))
@@ -232,7 +291,21 @@ class GameState(BaseState):
             linha2 = self.font_phase_name.render(
                 self.transition_phase_name, True, (255, 255, 255)
             )
-            screen.blit(linha2, linha2.get_rect(center=(WIDTH // 2, HEIGHT // 2 + 20)))
+            # Bandeira ao lado do nome do país (centraliza o grupo bandeira+nome).
+            linha2_y = HEIGHT // 2 + 20
+            if self.transition_flag is not None:
+                gap = 14
+                grupo_w = self.transition_flag.get_width() + gap + linha2.get_width()
+                inicio_x = WIDTH // 2 - grupo_w // 2
+                bandeira_y = linha2_y - self.transition_flag.get_height() // 2
+                screen.blit(self.transition_flag, (inicio_x, bandeira_y))
+                screen.blit(
+                    linha2,
+                    (inicio_x + self.transition_flag.get_width() + gap,
+                     linha2_y - linha2.get_height() // 2),
+                )
+            else:
+                screen.blit(linha2, linha2.get_rect(center=(WIDTH // 2, linha2_y)))
             linha3 = self.font_phase_subtitle.render(
                 self.transition_phase_subtitle, True, (200, 200, 200)
             )
