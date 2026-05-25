@@ -20,6 +20,16 @@ class GameState(BaseState):
     """Estado em que o jogador controla a raposa atravessando as fases."""
 
     def __init__(self, game):
+        """Inicializa a partida: fase 1, raposa, mapa, fontes, HUD e timers.
+
+        Cria os managers (level, map, score), spawna a raposa, carros e
+        power-ups da fase 1, e reseta o multiplicador global de velocidade
+        dos carros (usado pelo Instinto).
+
+        Args:
+            game: Instância raiz de Game (referência ao loop principal e ao
+                sound_manager compartilhado).
+        """
         super().__init__(game)
         Obstacle.speed_multiplier = 1.0
         self.level_manager = LevelManager()
